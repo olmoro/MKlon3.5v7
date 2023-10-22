@@ -1,0 +1,370 @@
+.LOG
+22:00 25.04.2023
+
+раскомментированны следующие строки:
+
+// #define ILI9341_DRIVER
+#define ILI9486_DRIVER
+
+
+#define TFT_HEIGHT 320 // ST7789 240 x 320
+
+#define TFT_INVERSION_OFF
+                 My:
+#define TFT_MISO 19
+#define TFT_MOSI 23
+#define TFT_SCLK 18
+#define TFT_CS   32      // Chip select control pin
+#define TFT_DC   05      // Data Command control pin
+#define TFT_RST  04      // Reset pin (could connect to RST pin)
+
+#define TOUCH_CS 33      // Chip select pin (T_CS) of touch screen
+//            BL +3.3    // 21 (for v7)
+
+
+#
+#define SMOOTH_FONT
+
+#define SPI_FREQUENCY  27000000
+#define SPI_READ_FREQUENCY  20000000
+#define SPI_TOUCH_FREQUENCY  2500000
+
+===================
+  TFT_BLACK
+  TFT_BROWN
+  TFT_RED
+  TFT_ORANGE
+  TFT_YELLOW
+  TFT_GREEN
+  TFT_BLUE
+  TFT_PURPLE
+  TFT_DARKGREY
+  TFT_WHITE
+  TFT_CYAN
+  TFT_MAGENTA
+  TFT_MAROON
+  TFT_DARKGREEN
+  TFT_NAVY
+  TFT_PINK
+  Если цвета на вашем дисплеи получаются инвертированными (например: черный цвет 
+  отображается как белый), то расскоментируйте 
+  #define TFT_INVERSION_OFF и закоментируйте 
+  #define TFT_INVERSION_ON или наоборот в файле User_Setup.h
+==================
+Вывод текста
+drawString(Текст, x, y);
+tft.drawString("Hello Blog", 10, 10);
+
+Рисование точки
+drawPixel(x, y, цвет);
+tft.drawPixel(10, 10, TFT_RED);
+
+Рисование круга
+drawCircle(x, y, радиус, цвет); - только границы
+fillCircle(x, y, радиус, цвет); - заполненный круг
+tft.drawCircle(100, 100, 40, TFT_BLUE);
+
+Рисование прямоугольника
+drawRect(x1, y1, ширина, высота, цвет); - только границы
+fillRect(x1, y1, ширина, высота, цвет); - заполненный прямоугольник
+tft.drawRect(10, 10, 100, 45, TFT_MAGENTA);
+
+Рисование треугольника
+drawTriangle(x1, y1, x2, y2, x3, y3, цвет); - только границы
+fillTriangle(x1, y1, x2, y2, x3, y3, цвет); - заполненный треугольник
+tft.drawTriangle(10, 160, 90, 10, 170, 160, TFT_PINK);
+
+Рисование изображения
+Рассмотрим пример, где у нас есть готовый файл и изображением.
+Нужно конвертировать изображение в XBM формат, можно воспользоваться онлайн конвертерами.
+Теперь нужно открыть XBM файл спомощю текстового редактора, скопировать содержимое в свой скетч.
+drawXBitmap(x, y, данные изображения, ширина изображения, высота изображения, цвет изображения,
+цвет фона);
+
+22:12 26.04.2023
+Первое включение дисплея ILI9486 3.5"    			    - OK
+
+21:18 03.05.2023
+Первое включение от +5 и +12.5, измерения V, F, T - OK
+
+08:00 04.05.2023
+mpins.h: распиновка платы с модулем ESP v7        - OK
+Включение от +19.6 0.03А (без WiFi)               - OK
+С вентилятором (DC 24V) 100% 18.4в 0.05А          - OK
+
+08:00 06.05.2023
+SDO дисплея к V_MISO не подключать!!!! исправлено - OK
+
+09:00 08.05.2023
+Проверена совместимость с Espressif 32 6.3.1 (без connectTask) - NO
+WiFi 192.168.0.12                                 - OK
+
+19:20 09.05.2023
+Новый класс MTouch (MKeyboard пока оставлен)      - OK
+
+09:00 10.05.2023
+MDisplay: Проверено время выдачи обязательных данных 30мс, поделены на 
+    printVolt()                               // 11 ms
+    printAmp()                                // 11 ms
+    printAmpHour(ah, 1)                       //  2 ms
+    printCelsius(cels, 1)                     //  2 ms
+    printDuration(duration, 0) + printHeap()  //  3 + 3 ms
+Обработка Touch с getTouchRaw(&x, &y) производится каждые 25 мс
+При вызове задачи через 25 мс время полного обновления
+не изменилось 25мс * 10 = 250мс                                 - OK
+Класс MTouch возможно не будет использоваться.
+
+18:00 24.06.2023
+  В задаче measureTask оставлены только измерения, проиводимые ресурсами ESP32:
+температуры и напряжение источника питания. Аппаратных кнопок в приборе нет.
+
+
+7:21 30.06.2023
+  После очистки от неиспользуемых старых файлов проекту дано новое название
+MKlon3.5v7 по версии корректированных плат.
+
+11:00 09.07.2023
+  Удалены неиспользуемые файлы.
+  Удален BUTTON.
+  Вызовы Keyboard->getKey() частично заменены на Display->getKey() или закомментированы.
+  Архив  MKlon3.5v7_20230709-1.zip
+
+=============================================
+  Обработчик нажатия отдельной задачей - отменено
+
+10:00 14.07.2023
+  Активизация кнопок newBtn(), addBtn()
+  Вывод sMODE, sHELP
+Архив   MKlon3.5v7src_20230714.zip
+
+  calcKeys()
+        MKlon3.5v7src_20230714-1.zip
+
+18:43 21.07.2023
+На плате cpu отсутствует проводник CS на дисплей (X8/3 - SV1/8)
+
+08:43 23.07.2023
+board/button.h, .cpp закомментированы
+Порты светодиодов: OUTPUT_OPEN_DRAIN заменил на OUTPUT - не выяснено, проблема с RED
+Измерение температуры         - OK
+Регулирование скорости        - OK 
+
+08:23 30.07.2023
+Отменены инициализации кнопок
+
+18:23 06.08.2023
+Эксперименты с очередью
+
+08:00 07.08.2023
+Версия проекта MKlon3.5v7-2 с использованием очереди      - отменено
+
+21:00 17.08.2023
+Артефакты на кнопках устранены приостановкой задачи displayTask на время
+отрисовки инверсного и нормального отображения активированной кнопки.     - OK
+Случайная смена шрифта режима и помощи устранена приостановкой задачи 
+xTask_Main на время отрисовки длинных строк в главном окне                - OK
+
+21:00 18.08.2023
+Оптимизация выдачи на дисплей.
+
+21:00 21.08.2023
+BOOT отключен
+Восстановление режима при подаче питания                  - OK
+
+Режим DEVICE:
+Ввод смещения, множителя и сглаживания по напряжению      - OK
+Ввод смещения, множителя и сглаживания по току            -  write_offset_i ?
+Ввод Kp, Ki, Keyboard                                     - OK
+Ввод частоты ПИД-регулятора                               - OK
+Калибровка тачскрина                                      - OK
+Очистка ключей                                            - OK
+
+Режим CCCV:
+Старт, коррекция minV, maxV, minI, maxI                   - OK
+Задержка включения                                        - OK
+CC  -
+CV  -
+
+OPTIONS:     
+Postpone    - OK
+Timeout     - OK
+NominalV    - OK
+Capacity    - OK
+Akb         - OK
+
+mdisplay : 
+Очистка поля строки в главном окне                          - OK
+Очистка главного окна при выводе нулевой строки отменена    - OK
+
+21:00 27.08.2023
+В lib TFT_eSPI.cpp добавлены строки 
+4317   str[ptr++] = ' ';
+4318   str[ptr++] = ' ';
+для удаления символы "-" при переходе через ноль.           - не решает
+
+21:00 27.08.2023
+№2 4Мб WiFi 192.168.0.13          - OK
+№1 16Мб (оба модуля) с WiFi не работает, идет перезагрузка:
+
+rst:0x7 (TG0WDT_SYS_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0018,len:4
+load:0x3fff001c,len:1216
+ho 0 tail 12 room 4
+load:0x40078000,len:10944
+load:0x40080400,len:6360
+entry 0x400806b4
+
+Проблема решена: 
+Устанавливать для 16Мб        board_build.flash_mode = dio
+при board_build.flash_mode = qio   ESP32 идёт в перезагрузку.
+
+[AC] Host:192.168.0.13   4Мб
+[AC] Host:192.168.0.14  16Мб
+[AC] Host:192.168.0.15  16Мб
+
+20:00 30.08.2023
+Замена ESP32 16Mb (со старого проекта) 
+Потребовалось запустить задачу, иначе
+Erase Flash (esp32dev) MKlon3.5v7      (52s)        - OK
+
+18:00 31.08.2023
+Тестовый заряд  на 4Мб модуле                                    - OK
+MKlon3.5v7_20230831.zip - полный архив, содержащий технологические режимы,
+которые далее планируется удалить из публикуемой версии.
+
+PLATFORM: Espressif 32 (3.5.0) > Espressif ESP32 Dev Module
+HARDWARE: ESP32 240MHz, 320KB RAM, 4MB Flash
+
+RAM:   [=         ]  13.1% (used 42984 bytes from 327680 bytes)
+Flash: [========  ]  80.2% (used 1051214 bytes from 1310720 bytes)
+
+
+========================= Сентябрь 2023 =========================
+01.09.2023
+Удалены 4 режима:
+RAM:   [=         ]  13.1% (used 42936 bytes from 327680 bytes)
+Flash: [========  ]  79.8% (used 1045858 bytes from 1310720 bytes)
+
+04.09.2023
+void aboutMode(short modeSelection); перенесен в 
+void MTools::aboutMode(short modeSelection);
+для более простого выхода в меню.                       - OK
+"Автоподсчет" количества кнопок                         - OK
+
+18:11 05.09.2023
+Диспетчер: 
+Загрузчик (BOOT) запускается всегда (выбор удален)			- OK
+При несоответствии номера режима в памяти с числом 
+режимов после BOOT'а запускается OPTIONS						    - OK
+Пошаговый режим загрузки BOOT'а						              - OK
+BOOT:
+Ошибка загрузки MTxGetTreaty	исправлено			          - OK
+
+20:59 06.09.2023
+Индикация времени задержки пуска и длительности заряда			      - OK
+Индикация и подсчет ампер-часов заряда					                  - OK
+RAM:   [=         ]  13.1% (used 42936 bytes from 327680 bytes)
+Flash: [========  ]  79.8% (used 1046118 bytes from 1310720 bytes)
+
+06:59 12.09.2023
+DEVICE - ввод коэффициентов ПИД-регуляторов V, I                  - OK
+DEVICE - очистка полей имен                                       - OK
+DEVICE - калибровка тачскрина                                     - OK
+RAM:   [=         ]  13.1% (used 42960 bytes from 327680 bytes)
+Flash: [========  ]  80.4% (used 1053682 bytes from 1310720 bytes)
+
+09.24 15.09.2023
+RAM:   [=         ]  13.1% (used 42976 bytes from 327680 bytes)
+Flash: [========  ]  80.4% (used 1054074 bytes from 1310720 bytes)
+
+RAM:   [=         ]  14.8% (used 48396 bytes from 327680 bytes)
+Flash: [========= ]  93.2% (used 1222178 bytes from 1310720 bytes)
+
+Без OPTIONS
+RAM:   [=         ]  14.8% (used 48388 bytes from 327680 bytes)
+Flash: [========= ]  92.8% (used 1216150 bytes from 1310720 bytes)
+
+RAM:        8         ???
+Flash:   6028  0.46%
+
+18.09.2023
+CCCV вычисления:
+maxV = v_max(tec) * nominalV(opt) / 2000(def)
+  v_max(tec) = v_max[Tools->readNvsShort("options", "akb", MConst::tec_fixed);]
+  nominalV(opt) = Tools->readNvsShort("options", "nominalV", MConst::nominal_v_fixed);
+
+minV = v_min(tec) * nominalV(opt) / 2000(def)
+  v_min(tec) = v_min[Tools->readNvsShort("options", "akb", MConst::tec_fixed);]
+  nominalV(opt) = Tools->readNvsShort("options", "nominalV", MConst::nominal_v_fixed);
+
+maxI = capacity(opt) * i_max(tec%) / 100
+  capacity(opt) = Tools->readNvsShort("options", "capacity", capacity_fixed);
+  i_max(tec%) = i_max[Tools->readNvsShort("options", "akb", MConst::tec_fixed);]
+
+minI = amt < low ? low : amt > high ? high : amt
+или 
+minI = constrain(capacity<1, low, high);
+где 
+  amt = capacity * 2 (mA)
+  low  =  20 mA
+  high = 200 mA
+
+18.09.2023
+OPTIONS: Добавлено состояние MApply
+RAM:   [=         ]  14.8% (used 48468 bytes from 327680 bytes)
+Flash: [========= ]  93.3% (used 1222738 bytes from 1310720 bytes)
+
+19.09.2023
+Приборные константы переносятся в project_config.h
+RAM:   [=         ]  14.8% (used 48476 bytes from 327680 bytes)
+Flash: [========= ]  93.3% (used 1222746 bytes from 1310720 bytes)
+
+We found 974.11MB of unnecessary PlatformIO system data (temporary files, unnecessary packages, etc.).
+Use `pio system prune --dry-run` to list them or `pio system prune` to save disk space.
+
+Редактирование CCCV
+Замена float на short параметры (кроме коэффициентов ПИД)
+RAM:   [=         ]  14.8% (used 48452 bytes from 327680 bytes)
+Flash: [========= ]  93.3% (used 1223146 bytes from 1310720 bytes)
+
+Режим разряда
+RAM:   [=         ]  14.8% (used 48460 bytes from 327680 bytes)
+Flash: [========= ]  93.6% (used 1226314 bytes from 1310720 bytes)
+
+19.09.2023
+Замена на 16МБ модуль   board_build.flash_mode = dio 
+RAM:   [=         ]  14.8% (used 48460 bytes from 327680 bytes)
+Flash: [==        ]  18.7% (used 1226314 bytes from 6553600 bytes)
+
+Залипает...
+rst:0x1 (POWERON_RESET),boot:0x3 (DOWNLOAD_BOOT(UART0/UART1/SDIO_REI_REO_V2)) waiting for download
+
+01.10.2023
+Режим разряда (не проверялся)
+4МБ
+RAM:   [=         ]  14.8% (used 48476 bytes from 327680 bytes)
+Flash: [========= ]  93.6% (used 1226706 bytes from 1310720 bytes)
+
+16.10.2023
+DEVICE исправления PID_D                  - ОК  
+                   PID_D STOP             - 
+                   PAUSE
+                   SP_V
+
+18.10.2023  
+  Тест ПИД-регулятора по току:
+I=3000mA, kp=0.56 ki=1.80 kd=0.01           - OK
+При Iвх=2,0А Т=34°C                         - OK
+RAM:   [=         ]  14.8% (used 48492 bytes from 327680 bytes)
+Flash: [========= ]  94.1% (used 1232878 bytes from 1310720 bytes)
+Новые команды установки напряжения и тока (замена универсальной)
+Tools->txChargeVGo(sp);                         - OK
+Tools->txChargeIGo(sp);                         - OK
+
+21.10.2023
+BOOT исправление команды 0x3E                   - OK
+RAM:   [=         ]  14.8% (used 48492 bytes from 327680 bytes)
+Flash: [========= ]  94.1% (used 1233106 bytes from 1310720 bytes)

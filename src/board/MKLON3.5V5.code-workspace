@@ -1,0 +1,19 @@
+{
+	"folders": [
+    {
+      "path": "../../../Keypad_480x320"
+    },
+    {
+      "name": "MKlon3.5v7",
+      "path": "../.."
+    },
+    {
+      "path": "../../../MCDMv7"
+    },
+    {
+      "name": "Viktor_1026",
+      "path": "../../../Viktor_1026"
+    }
+  ],
+	"settings": {}
+}
