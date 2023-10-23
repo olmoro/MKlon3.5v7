@@ -39,7 +39,7 @@ namespace MCccv
   short maxV, minV, maxI, minI;
   short voltageNom    = MPrj::nominal_v_fixed;
   short capacity      = MPrj::capacity_fixed;
-  static uint8_t line = 3;
+  static uint8_t mark = 3;
 
   //========================================================================= MStart
     // Состояние "Старт", инициализация выбранного режима работы (CC/CV).
@@ -69,20 +69,22 @@ namespace MCccv
 
     /* Вывод в главное окно построчно (26 знакомест):
       текст, номер строки, параметр (для float число знаков после запятой) */ 
-    Display->drawLabel("CCCV loaded:", 0);
+    Display->drawLabel(   "CCCV loaded:", 0);
                       //      Name        line    value
-    Display->drawShort("voltageNom, V :",  1, voltageNom/1000);
-    Display->drawShort("capacity, Ah :",   2, capacity);
-                      //  Name     line    value        dp
-    Display->drawParFl("maxV, V :", 3, maxV, 2);
-    Display->drawParFl("minV, V :", 4, minV, 2);
-    Display->drawParFl("maxI, A :", 5, maxI, 2);
-    Display->drawParFl("minI, A :", 6, minI, 2);
+    Display->drawShort("voltageNom, V :", 1, voltageNom/1000);
+    Display->drawShort( "capacity, Ah :", 2, capacity);
+                            //  Name     line value dp
+    Display->drawParFl(      "maxV, V :", 3, maxV, 2);
+    Display->drawParFl(      "minV, V :", 4, minV, 2);
+    Display->drawParFl(      "maxI, A :", 5, maxI, 2);
+    Display->drawParFl(      "minI, A :", 6, minI, 2);
 
     /* Активировать группу кнопок: newBtn() отменит активацию ранее выведенных на 
       экран кнопок. Далее кнопки будут задаваться одной строкой. */
     Display->newBtn(MDisplay::START);   // Стартовать без уточнения параметров
+#ifdef CCCV_ADJ
     Display->addBtn(MDisplay::ADJ);     // Корректировать параметры
+#endif
     Display->addBtn(MDisplay::STOP);    // Отказаться от заряда
 
     Board->ledsOn();  // Подтверждение входа в любой режим белым свечением светодиода
@@ -93,10 +95,12 @@ namespace MCccv
     switch (Display->getKey())    //Здесь так можно
     {
       case MDisplay::STOP:  return new MStop(Tools);          // Прервано оператором
+#ifdef CCCV_ADJ
       case MDisplay::ADJ:   
       /* Если введенные параметры заряда не устраивают, то по "ADJ" предлагается 
         ввести и при необходимости отредактировать сохраненные в Nvs. */
                                             return new MAdjParameters(Tools);
+#endif
       case MDisplay::START:
           /* Используются вычисленные параметры по типу батареи, выбираемой в OPTIONS.
             Заявлен переход в состояние задержки пуска */
@@ -108,6 +112,9 @@ namespace MCccv
     Tools->showAmp(Tools->getRealCurrent(), 2);
     return this; };  // При следующем вызове задачи mainTask будет вызвана эта же функция
 
+
+
+#ifdef CCCV_ADJ
   //======================================================================== MAdjParameters
   // Состояние "Коррекция параметров заряда".
   MAdjParameters::MAdjParameters(MTools * Tools) : MState(Tools)
@@ -120,14 +127,14 @@ namespace MCccv
       // Вывести в главное окно
       /* Для выделения цветом строки, с которой будет начат выбор, пятым 
         аргументом указывается тот же номер строки */
-    line = 3;
-    Display->drawLabel("CCCV", 0);
-    Display->drawLabel("Adjusting parameters", 1 );
-    Display->clearLine(2);
-    Display->drawParFl("maxV, V :", 3, maxV, 2, line);
-    Display->drawParFl("minV, V :", 4, minV, 2);
-    Display->drawParFl("maxI, A :", 5, maxI, 2);
-    Display->drawParFl("minI, A :", 6, minI, 3);
+    mark = 3;
+    Display->drawLabel(                "CCCV", 0);
+    Display->drawLabel("Adjusting parameters", 1);
+    Display->clearLine(                        2);
+    Display->drawParFl(           "maxV, V :", 3, maxV, 2, mark);
+    Display->drawParFl(           "minV, V :", 4, minV, 2);
+    Display->drawParFl(           "maxI, A :", 5, maxI, 2);
+    Display->drawParFl(           "minI, A :", 6, minI, 3);
     Board->ledsBlue();
     Display->newBtn(MDisplay::GO, MDisplay::NEXT, MDisplay::BACK);  // Активировать группу кнопок
   }
@@ -139,28 +146,26 @@ namespace MCccv
       //case MDisplay::STOP:  return new MStop(Tools);  // Прервано оператором
       /* Увы, такой кнопки нет, да и через MStop возвращаться для выбора иного 
         параметра было бы неудобно */
-      case MDisplay::NEXT:
-        (line >= 6) ? line = 3 : line++;  // Переместить курсор (выделение цветом)
-        Display->drawParFl("maxV, V :", 3, maxV, 2, line);
-        Display->drawParFl("minV, V :", 4, minV, 2, line);
-        Display->drawParFl("maxI, A :", 5, maxI, 2, line);
-        Display->drawParFl("minI, A :", 6, minI, 2, line);
-        break;
+      case MDisplay::NEXT:  (mark >= 6) ? mark = 3 : mark++;  // Переместить курсор (выделение цветом)
+                            Display->drawParFl("maxV, V :", 3, maxV, 2, mark);
+                            Display->drawParFl("minV, V :", 4, minV, 2, mark);
+                            Display->drawParFl("maxI, A :", 5, maxI, 2, mark);
+                            Display->drawParFl("minI, A :", 6, minI, 2, mark);
+                            break;
       case MDisplay::BACK:      // Мучения выбора:
             // Перейти на состояние работы с клавиатурой return new MLoadParameter(Tools);
             //return new MStop(Tools);        // Прервано оператором    test
             //return new MUpCurrent(Tools);    // Перейти к заряду    test
         //break;
                       return new MStart(Tools);    // Вернуться к старту заряда
-      case MDisplay::GO:
-        switch ( line )
-        {
-        case 3: return new MSetVoltageMax(Tools);
-        case 4: return new MSetVoltageMin(Tools);
-        case 5: return new MSetCurrentMax(Tools);
-        case 6: return new MSetCurrentMin(Tools);
-        default:           break;
-        }
+      case MDisplay::GO:    switch ( mark )
+                            {
+                              case 3:   return new MSetVoltageMax(Tools);
+                              case 4:   return new MSetVoltageMin(Tools);
+                              case 5:   return new MSetCurrentMax(Tools);
+                              case 6:   return new MSetCurrentMin(Tools);
+                              default:  break;
+                            }
       default:;
     }
     Tools->showVolt( Tools->getRealVoltage(), 2 );
@@ -176,14 +181,14 @@ namespace MCccv
       maxI = Tools->readNvsShort("cccv", "maxI", MPrj::max_i_fixed);
     */
       // В главное окно выводятся:
-    line  = 4;    // Регулируемый параметр всегда будет в 3-й строке, 
-    Display->drawLabel("Mode CCCV", 0);                 // режим,
-    Display->drawLabel("Adjusting maxI:", 1);           // полное название параметра (жёлтым)
-    Display->clearLine(2);
-    Display->drawParFl("Last maxI :", 3, maxI, 2);    // и его значение до   
-    Display->drawParFl("New maxI :",  4, maxI, 2);    // и его значение    
-    Display->clearLine(5, 7);                                     // Остальные строки очищаются
-    Board->ledsBlue();                                            // Синий - что-то меняется
+    mark  = 4;    // Регулируемый параметр всегда будет в 4-й строке, 
+    Display->drawLabel(       "Mode CCCV", 0);            // режим,
+    Display->drawLabel( "Adjusting maxI:", 1);            // полное название параметра (жёлтым)
+    Display->clearLine(                    2);
+    Display->drawParFl(     "Last maxI :", 3, maxI, 2);    // и его значение до   
+    Display->drawParFl(     "New maxI :",  4, maxI, 2);    // и его значение    
+    Display->clearLine(                    5, 7);          // Остальные строки очищаются
+    Board->ledsBlue();                                     // Синий - что-то меняется
     Display->newBtn(MDisplay::SAVE, MDisplay::UP, MDisplay::DN);  // Активировать группу кнопок
   }
 
@@ -194,15 +199,13 @@ namespace MCccv
       case MDisplay::SAVE:  Tools->writeNvsFloat("cccv", "maxI", maxI);                
         return new MAdjParameters(Tools);                        // Там выбрать или завершить
       case MDisplay::UP:    maxI = Tools->updnInt(maxI, dn, up, +50);
-        Display->drawLabel("CCCV", 0);
-        Display->drawLabel("Max Current changed:", 1); 
-        Display->drawParFl("New maxI :", 4, maxI, 2, line );    // Белым - когда значение изменено
-        break;
+                            Display->drawLabel("Max Current changed:", 1); 
+                            Display->drawParFl( "New maxI :", 4, maxI, 2, mark );
+                            break;
       case MDisplay::DN:    maxI = Tools->updnInt( maxI, dn, up, -50 );
-        Display->drawLabel("CCCV", 0);
-        Display->drawLabel("Max Current changed:", 1); 
-        Display->drawParFl("New maxI :", 4, maxI, 2, line ); 
-        break;
+                            Display->drawLabel("Max Current changed:", 1); 
+                            Display->drawParFl(          "New maxI :", 4, maxI, 2, mark ); 
+                            break;
       default:;
     }
     Tools->showVolt(Tools->getRealVoltage(), 2);
@@ -213,15 +216,15 @@ namespace MCccv
     // Состояние: "Коррекция максимального напряжения"
   MSetVoltageMax::MSetVoltageMax(MTools * Tools) : MState(Tools)
   {
-    line  = 4;
+    mark  = 4;
       // В главное окно выводятся:
-    Display->drawLabel("Mode CCCV", 0);                           // режим,
-    Display->drawLabel("Adjusting maxV:", 1);                     // полное название параметра (жёлтым)
-    Display->clearLine(2);                       
-    Display->drawParFl("Last maxV :",   3, maxV, 2);  // и его значение    
-    Display->drawParFl("New maxV :", line, maxV, 2);  // и его значение    
-    Display->clearLine(5, 7);                                     // Остальные строки очищаются
-    Board->ledsBlue();                                            // Синий - что-то меняется
+//  Display->drawLabel(      "Mode CCCV", 0);           // режим,
+    Display->drawLabel("Adjusting maxV:", 1);           // полное название параметра (жёлтым)
+    Display->clearLine(                   2);                       
+    Display->drawParFl(    "Last maxV :", 3, maxV, 2);  // и его значение    
+    Display->drawParFl(     "New maxV :", 4, maxV, 2);  // и его значение    
+    Display->clearLine(                   5, 7);        // Остальные строки очищаются
+    Board->ledsBlue();                                  // Синий - что-то меняется
     Display->newBtn(MDisplay::SAVE, MDisplay::UP, MDisplay::DN);
   }
 
@@ -231,16 +234,14 @@ namespace MCccv
     {
       case MDisplay::SAVE:  Tools->writeNvsFloat("cccv", "maxV", maxV);                
         return new MAdjParameters(Tools);
-      case MDisplay::UP:   maxV = Tools->updnInt( maxV, dn, up, +50);
-        Display->drawLabel("CCCV", 0);
-        Display->drawLabel("Max Voltage changed:", 1); 
-        Display->drawParFl("New maxV :", line, maxV, 2, line);
-        break;
-      case MDisplay::DN:   maxV = Tools->updnInt( maxV, dn, up, -50 );
-        Display->drawLabel("CCCV", 0 );
-        Display->drawLabel("Max Voltage changed:", 1 ); 
-        Display->drawParFl("New maxV :", line, maxV, 2, line ); 
-        break;
+      case MDisplay::UP:    maxV = Tools->updnInt( maxV, dn, up, +50);
+                            Display->drawLabel("Max Voltage changed:", 1); 
+                            Display->drawParFl(          "New maxV :", 4, maxV, 2, mark);
+                            break;
+      case MDisplay::DN:    maxV = Tools->updnInt( maxV, dn, up, -50 );
+                            Display->drawLabel("Max Voltage changed:", 1); 
+                            Display->drawParFl(          "New maxV :", 4, maxV, 2, mark); 
+                            break;
       default:;
     }
     Tools->showVolt(Tools->getRealVoltage(), 2);
@@ -254,13 +255,13 @@ namespace MCccv
     "виляете хвостом", а не хвост вами. */
   MSetCurrentMin::MSetCurrentMin(MTools * Tools) : MState(Tools)
   {
-    line = 4;
-    Display->drawLabel("Mode CCCV", 0);
+    mark = 4;
+    Display->drawLabel(      "Mode CCCV", 0);
     Display->drawLabel("Adjusting minI:", 1);
-    Display->clearLine(2);                       
-    Display->drawParFl("Last minI :",   3, minI, 2);
-    Display->drawParFl("New minI :", line, minI, 2);
-    Display->clearLine(5, 7);                       
+    Display->clearLine(                   2);                       
+    Display->drawParFl(    "Last minI :", 3, minI, 2);
+    Display->drawParFl(     "New minI :", 4, minI, 2);
+    Display->clearLine(                   5, 7);                       
     Board->ledsBlue();
     Display->newBtn( MDisplay::SAVE, MDisplay::UP, MDisplay::DN);
   }
@@ -272,14 +273,12 @@ namespace MCccv
       case MDisplay::SAVE:  Tools->writeNvsFloat("cccv", "minI", minI);                
         return new MAdjParameters(Tools);
       case MDisplay::UP:   minI = Tools->updnInt(minI, dn, up, +50);
-        Display->drawLabel("CCCV", 0);
         Display->drawLabel("Min Current changed:", 1); 
-        Display->drawParFl("New minI :", line, minI, 2, line);
+        Display->drawParFl(          "New minI :", 4, minI, 2, mark);
         break;
       case MDisplay::DN:   minI = Tools->updnInt( minI, dn, up, -50);
-        Display->drawLabel("CCCV", 0);
         Display->drawLabel("Min Current changed:", 1); 
-        Display->drawParFl("New minI :", line, minI, 2, line); 
+        Display->drawParFl(          "New minI :", 4, minI, 2, mark); 
         break;
       default:;
     }
@@ -291,13 +290,13 @@ namespace MCccv
   // Состояние: "Коррекция минимального напряжения окончания заряда"
   MSetVoltageMin::MSetVoltageMin(MTools * Tools) : MState(Tools)
   {
-    line = 4;
-    Display->drawLabel("Mode CCCV", 0);
+    mark = 4;
+    Display->drawLabel(      "Mode CCCV", 0);
     Display->drawLabel("Adjusting minV:", 1);
-    Display->clearLine(2);                       
-    Display->drawParFl("Last minV :",   3, minV, 2);
-    Display->drawParFl("New minV :", line, minV, 2);
-    Display->clearLine(5, 7);                       
+    Display->clearLine(                   2);                       
+    Display->drawParFl(    "Last minV :", 3, minV, 2);
+    Display->drawParFl(     "New minV :", 4, minV, 2);
+    Display->clearLine(                   5, 7);                       
     Board->ledsBlue();
     Display->newBtn( MDisplay::SAVE, MDisplay::UP, MDisplay::DN);
   }
@@ -309,14 +308,12 @@ namespace MCccv
       case MDisplay::SAVE:  Tools->writeNvsFloat("cccv", "minV", minV);                
         return new MAdjParameters(Tools);
       case MDisplay::UP:   minV = Tools->updnInt( minV, dn, up, +50);
-        Display->drawLabel("CCCV", 0 );
         Display->drawLabel("Min Voltage changed:", 1); 
-        Display->drawParFl("New minV :", line, minV, 2, line);
+        Display->drawParFl(          "New minV :", 4, minV, 2, mark);
         break;
       case MDisplay::DN:   minV = Tools->updnInt( minV, dn, up, -50);
-        Display->drawLabel("CCCV", 0);
         Display->drawLabel("Min Voltage changed:", 1); 
-        Display->drawParFl("New minV :", line, minV, 2, line); 
+        Display->drawParFl(          "New minV :", 4, minV, 2, mark); 
         break;
       default:;
     }
@@ -325,46 +322,55 @@ namespace MCccv
     /* В последующих состояниях указывать отображение тока и напряжения не будем...*/
     return this; };
 
+#endif
+
+
   //========================================================================= MPostpone
   // Состояние: "Задержка включения (отложенный старт)", время ожидания старта задается в OPTIONS.
   MPostpone::MPostpone(MTools * Tools) : MState(Tools)
   {
       // Параметр задержки начала заряда из энергонезависимой памяти, при первом включении - заводское
     Tools->postpone = Tools->readNvsShort("options", "postpone", 0);
+
+    kp = Tools->readNvsFloat("device", "kpI", MPrj::kp_i_default);      //MConst::fixedKpI);
+    ki = Tools->readNvsFloat("device", "kiI", MPrj::ki_i_default);      //MConst::fixedKiI);
+    kd = Tools->readNvsFloat("device", "kdI", MPrj::kd_i_default);      //MConst::fixedKdI);
+    Tools->txSetPidCoeffI(kp, ki, kd);  
+    //Tools->txSetPidCoeffI(0.01, 0, 0);  
+
+
+        vTaskDelay( 200 / portTICK_PERIOD_MS );
+
+
       // Восстановление пользовательских kp, ki
     //kp = Tools->readNvsFloat("cccv", "kpV", MConst::fixedKpV);
     kp = Tools->readNvsFloat("device", "kpV", MPrj::kp_v_default); // Так можно, но там другое
     ki = Tools->readNvsFloat("device", "kiV", MPrj::ki_v_default);      //MConst::fixedKiV);
     kd = Tools->readNvsFloat("device", "kdV", MPrj::kd_v_default);      //MConst::fixedKdV);
-    //Tools->txSetPidCoeffV(kp/2, ki/2, kd);  // 0x41  Команда драйверу
-    Tools->txSetPidCoeffV(0.01, 0, 0);  // 0x41  Команда драйверу
+    //Tools->txSetPidCoeffV(kp, 0.5, 0.0);  // 0x41  Команда драйверу
+    //Tools->txSetPidCoeffV(kp, ki, kd);  // 0x41  Команда драйверу
+    Tools->txSetPidCoeffV(1.0, 1.8, 0.1);  // 0x41  Команда драйверу
 
-        vTaskDelay( 200 / portTICK_PERIOD_MS );
 
-    kp = Tools->readNvsFloat("device", "kpI", MPrj::kp_i_default);      //MConst::fixedKpI);
-    ki = Tools->readNvsFloat("device", "kiI", MPrj::ki_i_default);      //MConst::fixedKiI);
-    kd = Tools->readNvsFloat("device", "kdI", MPrj::kd_i_default);      //MConst::fixedKdI);
-    //Tools->txSetPidCoeffI(kp/2, ki/2, kd);  
-    Tools->txSetPidCoeffI(0.01, 0, 0);  
       // Инициализация счетчика времени до старта
     Tools->setTimeCounter( Tools->postpone * 36000 );    // Отложенный старт ( * 0.1s в этой версии)
-    Display->drawLabel("Mode CCCV", 0);
+    Display->drawLabel(     "Mode CCCV", 0);
     Display->drawLabel("Delayed start:", 1);
-    Display->clearLine(2);
+    Display->clearLine(                  2);
     Display->drawShort("postpone, hr :", 3, Tools->postpone );
-    Display->clearLine(4, 7);
-    line = 3;
+    Display->clearLine(                  4, 7);
+    mark = 3;
   }
 
   MState *MPostpone::fsm()
   {
       // Старт по времени
-    if( Tools->postponeCalculation() )  return new MUpCurrent(Tools);
+    if(Tools->postponeCalculation())  return new MUpCurrent(Tools);
 
-    switch ( Display->getKey() )
+    switch (Display->getKey())
     {
-      case MDisplay::STOP:              return new MStop(Tools);
-      case MDisplay::GO:                return new MUpCurrent(Tools);
+      case MDisplay::STOP:            return new MStop(Tools);
+      case MDisplay::GO:              return new MUpCurrent(Tools);
       default:;
     }
     // Индикация в период ожидания старта (обратный отсчет)
@@ -382,14 +388,14 @@ namespace MCccv
   оператором. */
   MUpCurrent::MUpCurrent(MTools * Tools) : MState(Tools)
   {
-    line = 3;
-    Display->drawLabel("CCCV", 0);
-    Display->drawLabel("Const Current", 1);
-    Display->clearLine(2);
-    Display->drawParFl("maxI, A :", 3, maxI, 2);
-    Display->drawParFl("maxV, V :", 4, maxV, 2);
+    mark = 3;
+    Display->drawLabel(            "CCCV", 0);
+    Display->drawLabel(   "Const Current", 1);
+    Display->clearLine(                    2);
+    Display->drawParFl(       "maxI, A :", 3, maxI, 2);
+    Display->drawParFl(       "maxV, V :", 4, maxV, 2);
     Display->drawLabel(". . . wait . . .", 5);
-    Display->clearLine(6, 7);
+    Display->clearLine(                    6, 7);
     Board->ledsGreen();
     Display->newBtn( MDisplay::STOP, MDisplay::NEXT);
       // Обнуляются счетчики времени и отданного заряда
@@ -437,16 +443,16 @@ namespace MCccv
 
   MKeepVmax::MKeepVmax(MTools * Tools) : MState(Tools)
   {
-    Display->drawLabel("CCCV", 0);
-    Display->drawLabel("Const Voltage", 1);
-    Display->clearLine(2);
-    Display->drawParFl("maxI, A :", 3, maxI, 2);
-    Display->drawParFl("maxV, V :", 4, maxV, 2);
-    Display->drawLabel(". . . wait . . .", 5);
-    Display->clearLine(6, 7);
+    Display->drawLabel(             "CCCV", 0);
+    Display->drawLabel(    "Const Voltage", 1);
+    Display->clearLine(                     2);
+    Display->drawParFl(        "maxI, A :", 3, maxI, 2);
+    Display->drawParFl(        "maxV, V :", 4, maxV, 2);
+    Display->drawLabel( ". . . wait . . .", 5);
+    Display->clearLine(                     6, 7);
     Display->newBtn(MDisplay::STOP, MDisplay::NEXT);
     Board->ledsYellow();
-    line = 3;
+    mark = 3;
 
     //Tools->txPowerAuto(maxV, maxI);              // 0x20  Команда драйверу
   }

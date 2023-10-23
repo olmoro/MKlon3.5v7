@@ -18,7 +18,7 @@ MSupervisor::MSupervisor(MBoard * Board) : Board(Board)
   coolPID = new AutoPID(&coolSetPoint, &coolInput, &coolOutput, fan_pwm_min, fan_pwm_max, k_p, k_i, k_d);
   setFan( fan_pwm_max );
   coolPID->setBangBang( 30.0f, 5.0f );
-  coolSetPoint = 50.0f;   // Температурный порог хорошо бы задать в настройках  
+  coolSetPoint = 35.0f;   // Температурный порог хорошо бы задать в настройках  
 }
 
 MSupervisor::~MSupervisor() { delete coolPID; }

@@ -17,7 +17,7 @@ namespace MCccv
   // };
 
     // Режимы работы PID-регулятора
-  enum mode {MODE_OFF = 0, MODE_U, MODE_I, MODE_D, MODE_AUTO};
+//  enum mode {MODE_OFF = 0, MODE_U, MODE_I, MODE_D, MODE_AUTO};
 
   class MStart : public MState
   {       
@@ -27,6 +27,7 @@ namespace MCccv
     private:
   };
 
+#ifdef CCCV_ADJ
   class MAdjParameters : public MState
   {
     public:   
@@ -78,6 +79,7 @@ namespace MCccv
       static constexpr short up = 14000u;
       static constexpr short dn =  2000u;
   };
+#endif
 
   class MPostpone : public MState
   {
