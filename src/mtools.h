@@ -183,6 +183,12 @@ class MTools
     //void txDischargeGo(float spI);                          // 0x24
     void txDischargeGo(short spI);                          // 0x24
 
+    void txVoltageAdj(short spV);                           // 0x25 Регулировка напряжения
+    void txCurrentAdj(short spI);                           // 0x26 Регулировка тока заряда
+    void txDiscurrentAdj(short spD);                        // 0x27 Регулировка тока разряда
+
+
+
       // Команды работы с измерителем напряжения
         // Множитель преобразования в милливольты
     void txGetFactorU();                                    // 0x30 Чтение
@@ -238,6 +244,9 @@ class MTools
     // const uint8_t cmd_set_voltage               = 0x58; // старая, не проверена
     // const uint8_t cmd_set_current               = 0x59; // старая, не проверена 
     // const uint8_t cmd_set_discurrent            = 0x5A; // старая, не проверена
+
+    void txSetCurrent(unsigned short val);     // 0x59  // 20231024
+
     //void txSetDiscurrent(uint8_t m, unsigned short val); // 0x5A      case MCmd::cmd_write_discurrent:          doSetDiscurrent();        break;  // 0x5A na
     void txSetDiscurrent(unsigned short val);     // 0x5A  // 20231022 
      //case MCmd::cmd_write_discurrent:          doSetDiscurrent();        break;  // 0x5A na

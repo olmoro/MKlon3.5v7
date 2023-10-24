@@ -364,6 +364,36 @@ void MTools::txDischargeGo(short spI)
   buffCmd = MCmd::cmd_discharge_go;
 }                       
 
+
+//const uint8_t cmd_voltage_adj               = 0x25; // Регулировка напряжения
+//const uint8_t cmd_current_adj               = 0x26; // Регулировка тока заряда
+//const uint8_t cmd_discurrent_adj            = 0x27; // Регулировка тока разряда
+  // 0x25 Регулировка напряжения
+void MTools::txVoltageAdj(short spV)
+{
+  pidMode   = MCommands::RU;
+  setpointU = spV;
+  buffCmd = MCmd::cmd_current_adj;
+}
+
+  // 0x26 Регулировка тока заряда
+void MTools::txCurrentAdj(short spI)
+{
+  pidMode   = MCommands::RI;
+  setpointI = spI;
+  buffCmd = MCmd::cmd_current_adj;
+}
+
+  // 0x27 Регулировка тока разряда
+void MTools::txDiscurrentAdj(short spD)
+{
+  pidMode   = MCommands::RD;
+  setpointD = spD;
+  buffCmd = MCmd::cmd_discurrent_adj;
+}
+
+
+
   // Команды управления измерителями:
     // Множитель преобразования в милливольты
 void MTools::txGetFactorU()                           {buffCmd = MCmd::cmd_read_factor_u;}            // 0x30 Чтение
@@ -481,6 +511,17 @@ void MTools::txSetPidFrequency(unsigned short hz)
   buffCmd = MCmd::cmd_pid_write_frequency;                                                             // 0x4A Запись
 }
 
+void MTools::txSetCurrent(unsigned short val)     // 0x59
+{
+  pidMode   = MCommands::RI;
+  setpointI = val;
+  buffCmd = MCmd::cmd_write_current;              // 0x59
+}
+
+
+
+
+
 //   // 0x5A тестовая проверки регулятора разряда 20230210
 // void MTools::txSetDiscurrent(uint8_t m, unsigned short val)
 // {
@@ -494,7 +535,7 @@ void MTools::txSetDiscurrent(unsigned short val)
 {
   pidMode   = MCommands::RD;
   setpointD = val;
-  buffCmd = MCmd::cmd_write_discurrent;
+  buffCmd = MCmd::cmd_write_discurrent;   // 0x5A
 }  // doSetDiscurrent();
 
 

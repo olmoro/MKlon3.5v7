@@ -414,6 +414,15 @@ namespace MCccv
   {
     Tools->chargeCalculations();                // Подсчет отданных ампер-часов.
 
+    // // Плавое увеличение тока разряда, примерно 0.5А в секунду
+    // if(targetI != spI)
+    // {
+    //   targetI += 50;
+    //   if(targetI >= spI) targetI = spI;
+    //   //Tools->txSetDiscurrent(targetI);
+    //   Tools->txAdjCurrent(target);             // Новое имя
+    // }
+
     switch (Display->getKey() )
     {
       case MDisplay::STOP:                        return new MStop(Tools);

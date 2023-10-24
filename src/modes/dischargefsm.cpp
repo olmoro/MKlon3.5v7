@@ -350,7 +350,9 @@ namespace MDis
     {
       targetI += 50;
       if(targetI >= spI) targetI = spI;
-      Tools->txSetDiscurrent(targetI);
+      //Tools->txSetDiscurrent(targetI);
+      Tools->txDiscurrentAdj(targetI);
+
     }
 
     switch (Display->getKey())
