@@ -114,7 +114,7 @@ namespace MDis
   short minV;           // Минимальное напряжение, при котором разряд прекращается, мВ
   float kp, ki, kd;     // Коэффициенты ПИД-регулятора
   static uint8_t mark;  // Номер подсвеченной строки
-      static short targetI;
+  static short targetI;
 
   /* Состояние "Старт", инициализация выбранного режима работы (DISCHARGE). */
   MStart::MStart(MTools *Tools) : MState(Tools)

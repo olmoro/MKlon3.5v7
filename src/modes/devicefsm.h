@@ -115,7 +115,6 @@ namespace MDevice
     public:
       MAdjPid(MTools * Tools);
       MState * fsm() override;
-    private:
   };
 
   class MAdjPidV : public MState
@@ -123,7 +122,6 @@ namespace MDevice
     public:
       MAdjPidV(MTools * Tools);
       MState * fsm() override;
-    private:
   };
 
 //===== MLoadSpV, ввод порога PID-регулятора заряда по напряжению ===== 
@@ -133,15 +131,11 @@ namespace MDevice
       MLoadSpV(MTools * Tools);
       MState * fsm() override;
     private:
-//      static constexpr short sp_v_default = 14400u;  // 14.4v
-//      static constexpr short sp_i_default =  1000u;  //  1.0A
       // min/max для задания напряжения
       static constexpr short up    = 16200u;
       static constexpr short dn    =  200u;
       static constexpr short delta =  200u;
   };
-
-
 
   //======== MLoadKpV, ввод параметра KP PID-регулятора напряжения ========= 
   class MLoadKpV : public MState
@@ -161,7 +155,7 @@ namespace MDevice
       MLoadKiV(MTools * Tools);
       MState * fsm() override;
     private:
-      static constexpr float up = 2.00f;
+      static constexpr float up = 4.00f;
       static constexpr float dn = 0.00f;
   };
 
@@ -208,7 +202,7 @@ namespace MDevice
       MLoadKpI(MTools * Tools);
       MState * fsm() override;
     private:
-      static constexpr float up = 1.00f;
+      static constexpr float up = 2.00f;
       static constexpr float dn = 0.01f; 
   };
 
@@ -219,7 +213,7 @@ namespace MDevice
       MLoadKiI(MTools * Tools);
       MState * fsm() override;
     private:
-      static constexpr float up = 2.00f;
+      static constexpr float up = 4.00f;
       static constexpr float dn = 0.00f;
   };
 
@@ -352,8 +346,6 @@ namespace MDevice
       MClrDisKeys(MTools * Tools);
       MState * fsm() override;
   };
-
-
 
   class MClrTplKeys : public MState
   {

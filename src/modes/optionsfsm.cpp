@@ -145,14 +145,14 @@ namespace MOption
   MTimeout::MTimeout(MTools * Tools) : MState(Tools) 
   {
       // В главное окно выводятся:
-    Display->drawLabel("OPTIONS", 0);               // режим,
-    Display->drawLabel("Adjusting timeout", 1);     // полное название параметра (жёлтым)
-    Display->clearLine(2);
-    line = 3;      // В строке 3 имя, размерность и значение параметра из Nvs
-    Display->drawShort("Timeout, hr :", line, timeout);
-    Display->clearLine(4 , 7);                      // Остальные строки очищаются
+    Display->drawLabel(           "OPTIONS", 0);  // режим,
+    Display->drawLabel( "Adjusting timeout", 1);  // полное название параметра (жёлтым)
+    Display->clearLine(                      2);
+    Display->drawShort(     "Timeout, hr :", 3, timeout);
+    Display->clearLine(                      4, 7);                      // Остальные строки очищаются
     Board->ledsBlue();                              // Синий - что-то меняется
     Display->newBtn(MDisplay::SAVE, MDisplay::UP, MDisplay::DN); // Активировать группу кнопок
+    line = 3;      // В строке 3 имя, размерность и значение параметра из Nvs
   }
 
   MState * MTimeout::fsm()

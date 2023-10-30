@@ -18,6 +18,11 @@
   отклонения во всем диапазоне от -2 до +17 вольт и от -3 до +6 ампер.
   Процесс коррекции сдвига (shift) чередовать с коррекцией коэффициента пересчета (factor).
     Режим DEVICE не использует настройки выбора типа батареи режимом OPTIONS. 
+
+
+    Подбор коэффициентов ПИД-регулятора:
+    https://youtu.be/CgKPvyRrpzo 
+    
 */
 
 #include "modes/devicefsm.h"
@@ -538,10 +543,10 @@ namespace MDevice
   //========== MLoadKpV, ввод параметра KP PID-регулятора напряжения =========
   MLoadKpV::MLoadKpV(MTools *Tools) : MState(Tools)
   {
-    Display->drawLabel("DEVICE", 0);
+    Display->drawLabel(         "DEVICE", 0);
     Display->drawLabel("Adjusting kp V:", 1);
-    Display->drawParam("Kp :", 3, kpV, 2);
-    Display->clearLine(4, 5);
+    Display->drawParam(           "Kp :", 3, kpV, 2);
+    Display->clearLine(                   4, 6);
     mark = 3;
     Display->newBtn(MDisplay::SAVE, MDisplay::UP, MDisplay::DN);
   }
@@ -554,15 +559,15 @@ namespace MDevice
                             Tools->txSetPidCoeffV(kpV, kiV, kdV);       // 0x41 Применить
                             return new MAdjPidV(Tools);
       case MDisplay::UP:    kpV = Tools->updnFloat(kpV, dn, up, +0.01);
-                            Display->drawLabel("DEVICE", 0);
+//                            Display->drawLabel("DEVICE", 0);
                             Display->drawLabel("Voltage kp changed:", 1);
-                            Display->drawParam("Kp V :", 3, kpV, 2, mark);
+                            Display->drawParam(             "Kp V :", 3, kpV, 2, mark);
                       //      Tools->txSetPidCoeffV(kpV, kiV, kdV);       // 0x41 Применить
                             break;
       case MDisplay::DN:    kpV = Tools->updnFloat( kpV, dn, up, -0.01);
-                            Display->drawLabel("DEVICE", 0 );
+//                            Display->drawLabel("DEVICE", 0 );
                             Display->drawLabel("Voltage kp changed:", 1);
-                            Display->drawParam("Kp V :", 3, kpV, 2, mark);
+                            Display->drawParam(             "Kp V :", 3, kpV, 2, mark);
                       //      Tools->txSetPidCoeffV(kpV, kiV, kdV);       // 0x41 Применить
                             break;
       default:;
@@ -575,10 +580,10 @@ namespace MDevice
   //========== MLoadKiV, ввод параметра KI PID-регулятора напряжения =========
   MLoadKiV::MLoadKiV(MTools *Tools) : MState(Tools)
   {
-    Display->drawLabel("DEVICE", 0);
+    Display->drawLabel(         "DEVICE", 0);
     Display->drawLabel("Adjusting ki V:", 1);
-    Display->drawParam("Ki :", 3, kiV, 2);
-    Display->clearLine(4, 5);
+    Display->drawParam(           "Ki :", 3, kiV, 2);
+    Display->clearLine(                   4, 6);
     mark = 3;
     Display->newBtn(MDisplay::SAVE, MDisplay::UP, MDisplay::DN);
   }
@@ -592,16 +597,16 @@ namespace MDevice
                                 return new MAdjPidV(Tools);
       case MDisplay::UP:
         kiV = Tools->updnFloat(kiV, dn, up, +0.01);
-        Display->drawLabel("DEVICE", 0);
+//        Display->drawLabel("DEVICE", 0);
         Display->drawLabel("Voltage ki changed:", 1);
-        Display->drawParam("Ki V :", 3, kiV, 2, mark);
+        Display->drawParam(             "Ki V :", 3, kiV, 2, mark);
   //      Tools->txSetPidCoeffV(kpV, kiV, kdV);             // 0x41 Применить
         break;
       case MDisplay::DN:
         kiV = Tools->updnFloat(kiV, dn, up, -0.01);
-        Display->drawLabel("DEVICE", 0);
+//        Display->drawLabel("DEVICE", 0);
         Display->drawLabel("Voltage ki changed:", 1);
-        Display->drawParam("Ki V :", 3, kiV, 2, mark);
+        Display->drawParam(             "Ki V :", 3, kiV, 2, mark);
   //      Tools->txSetPidCoeffV(kpV, kiV, kdV);             // 0x41 Применить
         break;
       default:;
@@ -614,10 +619,10 @@ namespace MDevice
   //========== MLoadKdV, ввод параметра KD PID-регулятора напряжения =========
   MLoadKdV::MLoadKdV(MTools *Tools) : MState(Tools)
   {
-    Display->drawLabel("DEVICE", 0);
+//    Display->drawLabel("DEVICE", 0);
     Display->drawLabel("Adjusting kd V:", 1);
-    Display->drawParam("Kd :", 3, kdV, 2);
-    Display->clearLine(4, 5);
+    Display->drawParam(           "Kd :", 3, kdV, 2);
+    Display->clearLine(                   4, 6);
     mark = 3;
     Display->newBtn(MDisplay::SAVE, MDisplay::UP, MDisplay::DN);
   }
@@ -630,15 +635,15 @@ namespace MDevice
                             Tools->txSetPidCoeffV(kpV, kiV, kdV);       // 0x41 Применить
                             return new MAdjPidV(Tools);
       case MDisplay::UP:    kdV = Tools->updnFloat(kdV, dn, up, +0.01);
-                            Display->drawLabel("DEVICE", 0);
+//                            Display->drawLabel("DEVICE", 0);
                             Display->drawLabel("Voltage kd changed:", 1);
-                            Display->drawParam("Kd V :", 3, kdV, 2, mark);
+                            Display->drawParam(             "Kd V :", 3, kdV, 2, mark);
                       //      Tools->txSetPidCoeffV(kpV, kiV, kdV);               // 0x41 Применить
                             break;
       case MDisplay::DN:    kdV = Tools->updnFloat(kdV, dn, up, -0.01);
-                            Display->drawLabel("DEVICE", 0);
+//                            Display->drawLabel("DEVICE", 0);
                             Display->drawLabel("Voltage kd changed:", 1);
-                            Display->drawParam("Kd V :", 3, kdV, 2, mark);
+                            Display->drawParam(             "Kd V :", 3, kdV, 2, mark);
                       //      Tools->txSetPidCoeffV(kpV, kiV, kdV);               // 0x41 Применить
                             break;
       default:;
