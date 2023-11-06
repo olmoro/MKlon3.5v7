@@ -27,6 +27,8 @@ namespace MCmd
   constexpr uint8_t cmd_voltage_adj               = 0x25; // Регулировка напряжения
   constexpr uint8_t cmd_current_adj               = 0x26; // Регулировка тока заряда
   constexpr uint8_t cmd_discurrent_adj            = 0x27; // Регулировка тока разряда
+  constexpr uint8_t cmd_power_on            = 0x28; // 
+
 
   // Команды работы с измерителем напряжения
   // Множитель преобразования в милливольты

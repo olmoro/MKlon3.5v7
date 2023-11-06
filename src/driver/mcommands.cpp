@@ -64,6 +64,7 @@ void MCommands::doCommand()
       case MCmd::cmd_voltage_adj:             doVoltageAdj();             break;  // 0x25 Регулировка напряжения
       case MCmd::cmd_current_adj:             doCurrentAdj();             break;  // 0x26 Регулировка тока заряда
       case MCmd::cmd_discurrent_adj:          doDiscurrentAdj();          break;  // 0x27 Регулировка тока разряда
+      case MCmd::cmd_power_on:            doPowerOn();          break;  // 0x28
 
         // Команды работы с измерителем напряжения 
       case MCmd::cmd_read_factor_u:           doGetFactorU();             break;  // 0x30
@@ -417,6 +418,7 @@ short MCommands::dataProcessing()
         Tools->pMax  = Tools->calkPMax(shift, bits);
         //Tools->pHz   = Tools->calkPHz(hz);
         Tools->pidHz   = Tools->calkPHz(hz);
+//const float fparh = (float)(Tools->pMax / Tools->pMult);
   #ifdef DEBUG_TREATY
     Serial.print("shift: 0x");  Serial.println(shift, HEX);
     Serial.print("bits: 0x");   Serial.println(bits, HEX);
@@ -727,6 +729,15 @@ void MCommands::doDiscurrentAdj()
   id = Wake->replyU16(id, Tools->setpointD);
   Wake->configAsk( id, MCmd::cmd_discurrent_adj);
 }
+
+// 0x28 cmd_power_on:            
+void MCommands::doPowerOn()
+{
+  int id = 0;
+
+  Wake->configAsk(id, MCmd::cmd_power_on); 
+}
+
 
 
 

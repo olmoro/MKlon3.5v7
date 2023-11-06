@@ -14,8 +14,8 @@
   ПИД-регулятора методом граблей, бубна и напильника" - увлекательное занятие.
     Параметры сохраняются, а потом берутся из энергонезависимой памяти. В этом примере 
   некоторые параметры заменены на тестовые по понятной причине - сократить время между 
-  переходами от одного состояния к другому до нескольких минут, да и гонять батарею, 
-  сокращая её жизненный цикл жалко.
+  переходами от одного состояния к другому в процессе тестирования до нескольких минут, 
+  да и гонять батарею, сокращая её жизненный цикл жалко.
     Данная версия CCCV представляет минималистический вариант: исключены такие состояния, 
   как предзаряд, дозаряд, хранение, использование профилей пользователя, реализация которых 
   не составит труда для владеющего технологией программирования в среде Arduino и четкого 
@@ -28,7 +28,7 @@
   не так ли?
     И напоследок: замечено, что не следует создавать сложные состояния, лучше их дробить
   на более простые. 
-  Версия от 30.10.2023 
+  Версия от 06.11.2023 
 */
 
 #include "modes/cccvfsm.h"
@@ -43,12 +43,12 @@
 
 namespace MCccv
 {
-  short maxV, maxI, minI, minV;
-  float kpV, kiV, kdV;
-  float kpI, kiI, kdI;
-  short voltageNom    = MPrj::nominal_v_fixed;
-  short capacity      = MPrj::capacity_fixed;
-  short timeOut       = MPrj::timeout_fixed;
+  short maxV, maxI, minI, minV;                 // Заданные параметры заряда
+  float kpV, kiV, kdV;                          // Заданные коэффициенты ПИД-регулятора напряжения
+  float kpI, kiI, kdI;                          // Заданные коэффициенты ПИД-регулятора тока
+  short voltageNom    = MPrj::nominal_v_fixed;  // Номинальное напряжение батареи, вольты 
+  short capacity      = MPrj::capacity_fixed;   // Ёмкость батареи, ампер-часы
+  short timeOut       = MPrj::timeout_fixed;    // Длительность заряда, часы
 
   //========================================================================= MStart
     // Состояние "Старт", инициализация выбранного режима работы (CC/CV).
@@ -69,9 +69,9 @@ namespace MCccv
     capacity   = Tools->readNvsShort("options", "capacity", MPrj::capacity_fixed);
       // Параметры, вычисленные по технологии и емкости батареи, введенные в режиме OPTIONS:
     maxV       = Tools->readNvsShort("options", "maxV", MPrj::max_v_fixed);
-    minV       = 14000;   //Tools->readNvsShort("options", "minV", MPrj::min_v_fixed);    // Test
+    minV       = Tools->readNvsShort("options", "minV", MPrj::min_v_fixed);  // Test 14000
     maxI       = Tools->readNvsShort("options", "maxI", MPrj::max_i_fixed);
-    minI       = 550;   //Tools->readNvsShort("options", "minI", MPrj::min_i_fixed);      // Test
+    minI       = Tools->readNvsShort("options", "minI", MPrj::min_i_fixed);  // Test 550
     timeOut    = 1;  //Tools->readNvsShort("options", "timeout",  MPrj::timeout_fixed);   // Test
 
     /* Вывод в главное окно построчно (26 знакомест):
@@ -118,12 +118,13 @@ namespace MCccv
     kpI = Tools->readNvsFloat("device", "kpI", MPrj::kp_i_default);
     kiI = Tools->readNvsFloat("device", "kiI", MPrj::ki_i_default);
     kdI = Tools->readNvsFloat("device", "kdI", MPrj::kd_i_default);
-    Tools->txSetPidCoeffI(kpI, kiI, kdI);   vTaskDelay(80 / portTICK_PERIOD_MS);  // 0x41 Применить
-      /*  Поскольку в этом состоянии предполагается ещё передача команды драйверу (эти
-        команды начинаются с "Tools->tx..."), вводится гарантированная пауза на любое
-        разумное количества миллисекунд, в реальности это будет 100 - период вызова
-        диспетчером исполнения. Впрочем, продвинутый пользователь может организовать 
-        очередь команд. */
+    
+//  Serial.print("\nkp="); Serial.print(kpI, 2);  
+//  Serial.print("\nki="); Serial.print(kiI, 2);  
+//  Serial.print("\nkd="); Serial.print(kdI, 2);  
+    
+    Tools->txSetPidCoeffI(kpI, kiI, kdI);                             // 0x41 Применить
+ 
     kpV = Tools->readNvsFloat("device", "kpV", MPrj::kp_v_default);
     kiV = Tools->readNvsFloat("device", "kiV", MPrj::ki_v_default);
     kdV = Tools->readNvsFloat("device", "kdV", MPrj::kd_v_default);
@@ -185,7 +186,7 @@ namespace MCccv
      Здесь задаются сетпойнты по напряжению и току. Подъем тока
      производится ПИД-регулятором.
     */ 
-    Tools->txPidClear();    vTaskDelay(80 / portTICK_PERIOD_MS);
+    Tools->txPidClear();                // 0x44
     Tools->txPowerAuto(maxV, maxI);     /* 0x20  Команда драйверу запустить ПИД-регулятор
                                           в автоматическом режиме */
   }
@@ -214,7 +215,7 @@ namespace MCccv
     /* Уровни сглаживания можно не вводить всякий раз, однако при выходе из режима CCCV 
     всётаки лучше их вернуть к уровню 2. */
     Tools->showVolt(Tools->getRealVoltage(), 2, 3);
-    Tools->showAmp (Tools->getRealCurrent(), 3, 3);
+    Tools->showAmp (Tools->getRealCurrent(), 2, 3);
 
     return this;  };
 
@@ -259,7 +260,7 @@ namespace MCccv
     // Индикация фазы удержания максимального напряжения (текущие)
     Display->showDuration(Tools->getChargeTimeCounter(), MDisplay::SEC);
     Display->showAh(Tools->getAhCharge());
-    Tools->showVolt(Tools->getRealVoltage(), 3, 2); //Вольты покажем во всей красе
+    Tools->showVolt(Tools->getRealVoltage(), 2, 2); //Вольты покажем во всей красе
     Tools->showAmp (Tools->getRealCurrent(), 2, 3); //Скроем третий знак и отфильтруем
     return this; };
 
@@ -308,8 +309,8 @@ namespace MCccv
         названным "beauty" лучшее сглаживание выводимого параметра (по умолчанию 2),
         что никоим образом не скажется на регулировании, а только отфильтрует 
         картинку на браузере и дисплее. Для отмены придётся задать "2" */
-    Tools->showVolt(Tools->getRealVoltage(), 3, 3);   // Зададим формат NN.NNN
-    Tools->showAmp (Tools->getRealCurrent(), 3, 3);
+    Tools->showVolt(Tools->getRealVoltage(), 2, 3);   // Зададим формат NN.NNN
+    Tools->showAmp (Tools->getRealCurrent(), 2, 3);
     return this; };
 
   //========================================================================= MStop

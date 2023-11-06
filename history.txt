@@ -376,3 +376,5 @@ CV: kp = 0.73   ki = 1.79   kp = 0.0
 smooth: 
   smooth_v_default = 1u                 - OK
   smooth_1_default = 1u                 - OK
+
+cccvfsm.zip:         https://disk.yandex.ru/d/FSk-rRDVhoaWLA 

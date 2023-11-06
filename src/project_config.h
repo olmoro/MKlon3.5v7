@@ -8,6 +8,7 @@
 namespace MPrj
 {
     // Приборные ограничения:
+
   // Согласованные параметры измерителей SAMD21:
   static constexpr short factor_v_default = 0x5326u;
   static constexpr short factor_i_default = 0x7918u;
@@ -31,6 +32,9 @@ namespace MPrj
   static constexpr float ki_d_default = 0.20f;   //
   static constexpr float kd_d_default = 0.02f;   //
 
+
+
+
   // Дефолтные для ввода пользовательских параметров
   static constexpr short postpone_fixed  =  0u;
   static constexpr short timeout_fixed   =  5u;
@@ -46,7 +50,13 @@ namespace MPrj
   static constexpr short max_i_fixed     = capacity_fixed * 10 * 10;
   static constexpr short min_i_fixed     = cur_min_lo;
         
-
+  enum ROLES
+  {
+    RS = 0,    // режим прямого регулирования
+    RU,        // режим управления напряжением
+    RI,        // режим управления током
+    RD         // режим управления током разряда
+  };
 };
 
 #endif //_PROJECT_CONFIG_H_

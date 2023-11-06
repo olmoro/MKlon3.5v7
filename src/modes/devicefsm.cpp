@@ -1,7 +1,7 @@
 /*
-  Файл: devicefsm.cpp 18.10.2023
+  Файл: devicefsm.cpp 02.11.2023
   Конечный автомат заводских регулировок - арсенал разработчика и тех, кто вносит
-  изменения в аппаратную часть пибора, вольно или не вольно изменяя технические параметры:
+  изменения в аппаратную часть прибора, вольно или не вольно изменяя технические параметры:
   - коррекция приборного смещения и коэффициента преобразования по напряжению;
   - коррекция приборного смещения и коэффициента преобразования по току;
   - коррекция коэффициентов фильтрации измерений;
@@ -36,7 +36,7 @@
 namespace MDevice
 {
   static uint8_t mark = 3;  // Строка, выделяемая цветом
-  short sp;                 // Пороговое значение для отладки "на лету"
+  short spV, spI, spD;           // Пороговые значения для отладки "на лету"
   float kpV, kiV, kdV;      // Коэффициенты ПИД-регулятора по напряжению
   float kpI, kiI, kdI;      // то же по току заряда
   float kpD, kiD, kdD;      // то же по току разряда
@@ -48,13 +48,13 @@ namespace MDevice
     /* Каждое состояние представлено своим классом. Это конструктор класса MStart,
       исполняющий процесс инициализации, и только один раз, пока не произведен
       выход из этого состояния. */
-    Tools->txPowerStop();                         // 0x21 Команда драйверу перейти в безопасный режим
+    Tools->txPowerStop();  vTaskDelay(80 / portTICK_PERIOD_MS);  // 0x21 Перейти в безопасный режим
     mark = 2;                                           // Курсор на 2-ю строку
     Display->drawLabel("Mode DEVICE loaded:", 0);       // Режим, напоминание
     Display->clearLine(                       1);       // Пустая строка
-    Display->drawAdj(              "voltage", 2, mark); // Эта строка (mark=2) будет выделена
-    Display->drawAdj(              "current", 3, mark);
-    Display->drawAdj(                  "PID", 4, mark); // Коэффициенты ПИД-регуляторов
+    Display->drawAdj(                  "PID", 2, mark); // Коэффициенты ПИД-регуляторов
+    Display->drawAdj(              "voltage", 3, mark); // Эта строка (mark=2) будет выделена
+    Display->drawAdj(              "current", 4, mark);
     Display->drawAdj(            "DisplayXY", 5, mark); // Подкалибровать тачскрин (подшаманить)
     Display->drawAdj(                "Clear", 6, mark); // Очистка ключей NVS
     Display->clearLine(                       7);
@@ -70,17 +70,17 @@ namespace MDevice
     {
     case MDisplay::STOP:     return new MStop(Tools); // Goodbye режим DEVICE
     case MDisplay::NEXT:    (mark >= 6) ? mark = 2 : mark++;      // Переместить курсор
-                            Display->drawAdj(       "voltage", 2, mark);
-                            Display->drawAdj(       "current", 3, mark);
-                            Display->drawAdj(           "PID", 4, mark);
+                            Display->drawAdj(           "PID", 2, mark);
+                            Display->drawAdj(       "voltage", 3, mark);
+                            Display->drawAdj(       "current", 4, mark);
                             Display->drawAdj(     "DisplayXY", 5, mark);
                             Display->drawAdj(         "Clear", 6, mark);
                             break;
     case MDisplay::START:   switch (mark)
                             {
-                              case 2: return new MAdjVoltage(Tools); // Voltage
-                              case 3: return new MAdjCurrent(Tools); // Current
-                              case 4: return new MAdjPid(Tools);     // kp, ki, kd
+                              case 2: return new MAdjPid(Tools);     // kp, ki, kd
+                              case 3: return new MAdjVoltage(Tools); // Voltage
+                              case 4: return new MAdjCurrent(Tools); // Current
                               case 5: return new MMultXY(Tools);     // Поправочные множители тачскрина
                               case 6: return new MClear(Tools);      // Очистка энергонезависимой памяти
                               default:;
@@ -93,6 +93,201 @@ namespace MDevice
     // Tools->showAmp (Tools->getRealCurrent(), 2);
     return this;  /* При следующем вызове исполнить fsm() снова. */
   }; //MStart
+
+  //========================================================================= MAdjPid
+  /* Состояние: "Выбор объекта коррекции параметров регулятора по току".
+  */
+  MAdjPid::MAdjPid(MTools *Tools) : MState(Tools)
+  {
+    // Список доступных регулировок
+    mark = 3;
+    Display->drawLabel(        "DEVICE", 0);
+    Display->drawLabel("Adjusting Pid:", 1);
+    Display->clearLine(                  2);
+    Display->drawAdj(         "PID_I",   3, mark);
+    Display->drawAdj(         "PID_V",   4, mark);
+    Display->drawAdj(         "PID_D",   5, mark);
+    Display->drawAdj( "Pid Frequency",   6, mark);
+    Display->clearLine(                  7);
+    Board->ledsBlue();
+    Display->newBtn(MDisplay::GO, MDisplay::NEXT, MDisplay::BACK);
+  }
+
+  MState *MAdjPid::fsm()
+  {
+    switch (Display->getKey())
+    {
+      case MDisplay::NEXT:  (mark >= 6) ? mark = 3 : mark++;      // Переместить курсор
+                            Display->drawAdj(         "PID_I", 3, mark);
+                            Display->drawAdj(         "PID_V", 4, mark);
+                            Display->drawAdj(         "PID_D", 5, mark);
+                            Display->drawAdj( "Pid Frequency", 6, mark);
+                            break;
+      case MDisplay::GO:    switch (mark)
+                            {
+                              case 3: return new MAdjPidI(Tools);      //
+                              case 4: return new MAdjPidV(Tools);      //
+                              case 5: return new MAdjPidD(Tools);      //
+                              case 6: return new MPidFrequency(Tools); // Pid Frequency
+                              default:;
+                            }
+      case MDisplay::BACK:  return new MStart(Tools); // Перейти к 
+      default:;
+    }
+    return this;
+  };
+
+
+  //========================================================================= MAdjPidI
+  /* Состояние выбора параметра ПИД-регулятора по току. Предварительно сетпойнт 
+    по напряжению заведомо выше напряжения на клеммах (через состояние MAdjPidV/spV).
+    Включение и выключение заряда (GO/STOP) производятся без выхода из данного 
+    состояния. Светодиод индицирует зеленым когда ПИД-регулятор находится в режиме 
+    поддержания тока. Переход к подбору параметров происходит "на лету", без 
+    остановки заряда. */  
+  MAdjPidI::MAdjPidI(MTools *Tools) : MState(Tools)
+  {
+    spI   = Tools->readNvsShort("device", "spI", sp_i_default);
+    spV   = Tools->readNvsShort("device", "spV", sp_u_default);
+    // Восстановление пользовательских kp, ki, kp
+    kpI = Tools->readNvsFloat("device", "kpI", MPrj::kp_i_default);
+    kiI = Tools->readNvsFloat("device", "kiI", MPrj::ki_i_default);
+    kdI = Tools->readNvsFloat("device", "kdI", MPrj::kd_i_default);
+    Tools->txSetPidCoeffI(kpI, kiI, kdI); // 0x41 Применить
+
+    mark = 3;
+    Display->drawLabel(           "DEVICE", 0);
+    Display->drawLabel( "Adjusting PID_I:", 1);
+    Display->clearLine(                     2);
+    Display->drawAdj  (         "STOP/GO!", 3,          mark);
+    Display->drawParFl(          "Sp, A :", 4,  spI, 2, mark);
+    Display->drawParam(             "Kp :", 5,  kpI, 2, mark);
+    Display->drawParam(             "Ki :", 6,  kiI, 2, mark);
+    Display->drawParam(             "Kd :", 7,  kdI, 2, mark);
+
+    Display->newBtn(MDisplay::GO, MDisplay::NEXT, MDisplay::BACK);
+  }
+
+  MState *MAdjPidI::fsm()
+  {
+    switch (Display->getKey())
+    {
+      case MDisplay::NEXT:  (mark >= 7) ? mark = 3 : mark++;
+                            Display->drawAdj  ("STOP/GO!", 3,         mark);
+                            Display->drawParFl( "Sp, A :", 4, spI, 2, mark);
+                            Display->drawParam(    "Kp :", 5, kpI, 2, mark);
+                            Display->drawParam(    "Ki :", 6, kiI, 2, mark);
+                            Display->drawParam(    "Kd :", 7, kdI, 2, mark);
+                            break;
+
+      case MDisplay::GO:    switch (mark)
+                            {
+                              case 3: Display->newBtn(MDisplay::GO, MDisplay::NEXT, MDisplay::STOP);
+                                      //Tools->txPowerAuto(spV, spI);
+                                      //Tools->txCurrentAdj(spI);// 0x26
+          //Tools->txPowerVGo(spV, spI);
+                  // Включить (0x24)или отключить (0x21)    // д.б. STOP/GO
+        //    (Tools->getState() == Tools->getStatusPidCurrent()) ?
+        //                                      Tools->txPowerStop() : Tools->txPowerIGo(spV, spI/2);
+                                              //Tools->txPowerIGo(spV, spI/2);
+                                              //Tools->txPowerIGo(0, spI/2);
+                                              Tools->txPowerMode(spV, spI, MPrj::RI); // 0x22
+
+
+                                      break;
+                              case 4: return new MLoadSpI(Tools);
+                              case 5: return new MLoadKpI(Tools);
+                              case 6: return new MLoadKiI(Tools);
+                              case 7: return new MLoadKdI(Tools);
+                              default:;
+                            }
+                            break;
+      case MDisplay::BACK:  return new MStart(Tools);
+      case MDisplay::STOP:  Tools->txPowerStop();
+                            break;
+      default:;
+    }
+
+Serial.print("\nStateI=0b"); Serial.print(Tools->getState(), HEX);
+
+    (Tools->getState() == Tools->getStatusPidCurrent()) ? 
+                                     Board->ledsGreen() : Board->ledsRed();
+    return this;
+  };  //MAdjPidI
+
+
+  //========================================================================= MAdjPidV
+  /* Состояние выбора параметра */
+  MAdjPidV::MAdjPidV(MTools *Tools) : MState(Tools)
+  {
+    spV = Tools->readNvsShort("device", "spV", sp_u_default);
+    spI = Tools->readNvsShort("device", "spI", sp_i_default);
+    // Восстановление пользовательских kp, ki, kp
+    kpV = Tools->readNvsFloat("device", "kpV", MPrj::kp_v_default);
+    kiV = Tools->readNvsFloat("device", "kiV", MPrj::ki_v_default);
+    kdV = Tools->readNvsFloat("device", "kdV", MPrj::kd_v_default);
+    Tools->txSetPidCoeffI(kpV, kiV, kdV);                           // 0x41 Применить
+
+    mark = 3;
+    Display->drawLabel(               "DEVICE", 0);
+    Display->drawLabel("Adjusting Setpoint_V:", 1);
+    Display->clearLine(                         2);
+    Display->drawAdj (              "STOP/GO!", 3,         mark);
+    Display->drawParFl(              "Sp, V :", 4, spV, 2, mark);
+    Display->drawParam(                 "Kp :", 5, kpV, 2, mark);
+    Display->drawParam(                 "Ki :", 6, kiV, 2, mark);
+    Display->drawParam(                 "Kd :", 7, kdV, 2, mark);
+
+    Display->newBtn(MDisplay::GO, MDisplay::NEXT, MDisplay::BACK);
+  }
+
+  MState *MAdjPidV::fsm()
+  {
+    switch (Display->getKey())
+    {
+      case MDisplay::NEXT:  (mark >= 7) ? mark = 3 : mark++;      // Переместить курсор
+                            Display->drawAdj  ("STOP/GO!", 3,         mark);
+                            Display->drawParFl( "Sp, V :", 4, spV, 2, mark);
+                            Display->drawParam(    "Kp :", 5, kpV, 2, mark);
+                            Display->drawParam(    "Ki :", 6, kiV, 2, mark);
+                            Display->drawParam(    "Kd :", 7, kdV, 2, mark);
+                            break;
+      case MDisplay::GO:    switch (mark)
+                            {
+                              case 3: Display->newBtn(MDisplay::GO, MDisplay::NEXT, MDisplay::STOP);
+                                      //Tools->txPowerAuto(spV, spI);
+                                      //Tools->txPowerVGo(spV, spI);
+                                      Tools->txVoltageAdj(spV);       // 0x25
+                                      break;
+                              case 4: return new MLoadSpV(Tools);
+                              case 5: return new MLoadKpV(Tools);
+                              case 6: return new MLoadKiV(Tools);
+                              case 7: return new MLoadKdV(Tools);
+                              default:;
+                            }
+                            break;
+      case MDisplay::BACK:  return new MStart(Tools);
+      case MDisplay::STOP:  Tools->txPowerStop();
+                            break;
+      default:;
+    }
+
+    Serial.print("\nStateV=0x"); Serial.print(Tools->getState(), HEX);
+
+    (Tools->getState() == Tools->getStatusPidVoltage()) ? 
+                                     Board->ledsGreen() : Board->ledsRed();
+    return this;
+  };  //MAdjPidV
+
+
+
+
+
+
+
+
+
+
 
   //========================================================================= MAdjVoltage
   // Состояние: "Выбор объекта коррекции параметров по напряжению".
@@ -139,9 +334,7 @@ namespace MDevice
   {
     shift = Tools->readNvsShort( "device", "offsetV", fixed );
     // В главное окно выводятся:
-//    Display->drawLabel(                  "DEVICE", 0);        // режим,
     Display->drawLabel("Adjusting voltage shift:", 1);        // полное название параметра (жёлтым)
-//    Display->clearLine(                            2);
     Display->drawShort(                 "Shift :", 3, shift); // и его значение из Nvs (целочисленное)
     Display->clearLine(                            4, 5);
     mark = 3;
@@ -156,13 +349,11 @@ namespace MDevice
       case MDisplay::SAVE:  Tools->writeNvsShort("device", "offsetV", shift); // Сохранить 
                             return new MAdjVoltage(Tools);                    // Там выбрать или завершить
       case MDisplay::UP:    shift = Tools->updnInt(shift, dn, up, +1);
-//                            Display->drawLabel("DEVICE", 0);
                             Display->drawLabel("Voltage offset changed:", 1);
                             Display->drawShort("Shift :", 3, shift, mark);    // Белым - когда значение изменено
                             Tools->txSetShiftU(shift);                        // 0x36 Применить
                             break;
       case MDisplay::DN:    shift = Tools->updnInt(shift, dn, up, -1);
-//                            Display->drawLabel("DEVICE", 0);
                             Display->drawLabel("Voltage offset changed:", 1);
                             Display->drawShort("Shift :", 3, shift, mark);
                             Tools->txSetShiftU(shift);                          // 0x36 Применить
@@ -178,7 +369,6 @@ namespace MDevice
   {
     factor = Tools->readNvsShort("device", "factorV", fixed);
     // В главное окно выводятся:
-//    Display->drawLabel(                   "DEVICE", 0);   // режим,
     Display->drawLabel("Adjusting voltage factor:", 1);   // полное название параметра (жёлтым)
     Display->drawShort(                 "Factor :", 3, factor);  // и его значение из Nvs
     Display->clearLine(                             4, 5);
@@ -194,13 +384,11 @@ namespace MDevice
       case MDisplay::SAVE:  Tools->writeNvsShort("device", "factorV", factor);
                             return new MAdjVoltage(Tools);        // Там выбрать или завершить
       case MDisplay::UP:    factor = Tools->updnInt(factor, dn, up, +1);
-//                            Display->drawLabel("DEVICE", 0);
                             Display->drawLabel("Voltage factor changed:", 1);
                             Display->drawShort("Factor :", 3, factor, mark);
                             Tools->txSetFactorU(factor);                      // 0x31 Применить
                             break;
       case MDisplay::DN:    factor = Tools->updnInt(factor, dn, up, -1);
-//                            Display->drawLabel("DEVICE", 0);
                             Display->drawLabel("Voltage factor changed:", 1);
                             Display->drawShort("Factor :", 3, factor, mark);
                             Tools->txSetFactorU(factor);                      // 0x31 Применить
@@ -232,13 +420,11 @@ namespace MDevice
       case MDisplay::SAVE:  Tools->writeNvsShort("device", "smoothV", smooth);
                             return new MAdjVoltage(Tools); // Там выбрать или завершить
       case MDisplay::UP:    smooth = Tools->updnInt(smooth, dn, up, +1);
-//                            Display->drawLabel("DEVICE", 0);
                             Display->drawLabel("Voltage smooth changed:", 1);
                             Display->drawShort("Smooth :", 3, smooth, mark);
                             Tools->txSetFactorU(smooth);                       // 0x34 Применить
                             break;
       case MDisplay::DN:    smooth = Tools->updnInt(smooth, dn, up, -1);
-//                            Display->drawLabel("DEVICE", 0);
                             Display->drawLabel("Voltage smooth changed:", 1);
                             Display->drawShort("Smooth :", 3, smooth, mark);
                             Tools->txSetFactorU(smooth);                        // 0x34 Применить
@@ -294,10 +480,9 @@ namespace MDevice
   {
     shift = Tools->readNvsShort("device", "offsetI", fixed);
     // В главное окно выводятся:
-//    Display->drawLabel("DEVICE", 0);                   // режим,
-    Display->drawLabel("Adjusting current shift:", 1); // полное название параметра (жёлтым)
-    Display->drawShort("Shift :", 3, shift);           // и его значение из Nvs
-    Display->clearLine(4, 5);
+    Display->drawLabel("Adjusting current shift:", 1);      // полное название параметра (жёлтым)
+    Display->drawShort(                 "Shift :", 3, shift);           // и его значение из Nvs
+    Display->clearLine(                            4, 5);
     mark = 3;
     Board->ledsBlue(); // Синий - что-то меняется
     Display->newBtn( MDisplay::SAVE, MDisplay::UP, MDisplay::DN );
@@ -310,13 +495,11 @@ namespace MDevice
       case MDisplay::SAVE:  Tools->writeNvsShort("device", "offsetI", shift);
                             return new MAdjCurrent(Tools);          // Там выбрать или завершить
       case MDisplay::UP:    shift = Tools->updnInt(shift, dn, up, +1);
-//                            Display->drawLabel("DEVICE", 0);
                             Display->drawLabel("Current offset changed:", 1);
                             Display->drawShort("Shift :", 3, shift, mark);
                             Tools->txSetShiftI(shift);                        // 0x3E Применить
                             break;
       case MDisplay::DN:    shift = Tools->updnInt(shift, dn, up, -1);
-//                            Display->drawLabel("DEVICE", 0);
                             Display->drawLabel("Current offset changed:", 1);
                             Display->drawShort("Shift :", 3, shift, mark);
                             Tools->txSetShiftI(shift);                        // 0x3E Применить
@@ -332,10 +515,9 @@ namespace MDevice
   {
     factor = Tools->readNvsShort("device", "factorI", fixed);
     // В главное окно выводятся:
-//    Display->drawLabel("DEVICE", 0);                    // режим,
     Display->drawLabel("Adjusting current factor:", 1); // полное название параметра (жёлтым)
-    Display->drawShort("Factor :", 3, factor);          // и его значение из Nvs
-    Display->clearLine(4, 5);
+    Display->drawShort(                 "Factor :", 3, factor);          // и его значение из Nvs
+    Display->clearLine(                             4, 5);
     mark = 3;
     Board->ledsBlue(); // Синий - что-то меняется
     Display->newBtn(MDisplay::SAVE, MDisplay::UP, MDisplay::DN);
@@ -348,13 +530,11 @@ namespace MDevice
       case MDisplay::SAVE:  Tools->writeNvsShort("device", "factorI", factor);
                             return new MAdjCurrent(Tools); // Там выбрать или завершить
       case MDisplay::UP:    factor = Tools->updnInt(factor, dn, up, +1);
-//                            Display->drawLabel("DEVICE", 0);
                             Display->drawLabel("Current factor changed:", 1);
                             Display->drawShort("Factor :", 3, factor, mark);
                             Tools->txSetFactorI(factor);                      // 0x39 Применить
                             break;
       case MDisplay::DN:    factor = Tools->updnInt(factor, dn, up, -1);
-//                            Display->drawLabel("DEVICE", 0);
                             Display->drawLabel("Current factor changed:", 1);
                             Display->drawShort("Factor :", 3, factor, mark);
                             Tools->txSetFactorI(factor);                      // 0x39 Применить
@@ -369,10 +549,9 @@ namespace MDevice
   MSmoothI::MSmoothI(MTools *Tools) : MState(Tools)
   {
     smooth = Tools->readNvsShort("device", "smoothI", fixed);
-//    Display->drawLabel("DEVICE", 0);                    // режим,
     Display->drawLabel("Adjusting current smooth:", 1); // полное название параметра (жёлтым)
-    Display->drawShort("Smooth :", 3, smooth);          // и его значение из Nvs
-    Display->clearLine(4, 5);
+    Display->drawShort(                 "Smooth :", 3, smooth);          // и его значение из Nvs
+    Display->clearLine(                             4, 5);
     mark = 3;
     Board->ledsBlue(); // Синий - что-то меняется
     Display->newBtn( MDisplay::SAVE, MDisplay::UP, MDisplay::DN );
@@ -385,13 +564,11 @@ namespace MDevice
       case MDisplay::SAVE:  Tools->writeNvsShort("device", "smoothI", smooth);
                             return new MAdjCurrent(Tools); // Там выбрать или завершить
       case MDisplay::UP:    smooth = Tools->updnInt(smooth, dn, up, +1);
-//                            Display->drawLabel("DEVICE", 0);
                             Display->drawLabel("Current smooth changed:", 1);
                             Display->drawShort("Smooth :", 3, smooth, mark);
                             Tools->txSetSmoothI(smooth);                      // 0x3C Применить
                             break;
       case MDisplay::DN:    smooth = Tools->updnInt(smooth, dn, up, -1);
-//                            Display->drawLabel("DEVICE", 0);
                             Display->drawLabel("Current smooth changed:", 1);
                             Display->drawShort("Smooth :", 3, smooth, mark);
                             Tools->txSetSmoothI(smooth);                      // 0x3C Применить
@@ -402,135 +579,40 @@ namespace MDevice
   }; // MSmoothI
 
 
-  //========================================================================= MAdjPid
-  // Состояние: "Выбор объекта коррекции параметров регулятора по току".
-  /*...*/
-  MAdjPid::MAdjPid(MTools *Tools) : MState(Tools)
-  {
-    // Список доступных регулировок
-    mark = 3;
-    Display->drawLabel("DEVICE",         0);
-    Display->drawLabel("Adjusting Pid:", 1);
-    Display->clearLine(                  2);
-    Display->drawAdj(         "PID_V",   3, mark);
-    Display->drawAdj(         "PID_I",   4, mark);
-    Display->drawAdj(         "PID_D",   5, mark);
-    Display->drawAdj( "Pid Frequency",   6, mark);
-    Display->clearLine(                  7);
-    Board->ledsBlue();
-    Display->newBtn(MDisplay::GO, MDisplay::NEXT, MDisplay::BACK);
-  }
 
-  MState *MAdjPid::fsm()
-  {
-    switch (Display->getKey())
-    {
-      case MDisplay::NEXT:  (mark >= 6) ? mark = 3 : mark++;      // Переместить курсор
-                            Display->drawAdj(         "PID_V", 3, mark);
-                            Display->drawAdj(         "PID_I", 4, mark);
-                            Display->drawAdj(         "PID_D", 5, mark);
-                            Display->drawAdj( "Pid Frequency", 6, mark);
-                            break;
-      case MDisplay::GO:    switch (mark)
-                            {
-                            case 3: return new MAdjPidV(Tools);      //
-                            case 4: return new MAdjPidI(Tools);      //
-                            case 5: return new MAdjPidD(Tools);      //
-                            case 6: return new MPidFrequency(Tools); // Pid Frequency
-                            default:;
-                            }
-      case MDisplay::BACK:  return new MStart(Tools); // Перейти к 
-      default:;
-    }
-    return this;
-  };
 
-  //========================================================================= MAdjPidV
-
-  MAdjPidV::MAdjPidV(MTools *Tools) : MState(Tools)
-  {
-    sp = Tools->readNvsShort("device", "spV", sp_u_default);
-    // Восстановление пользовательских kp, ki, kp
-    kpV = Tools->readNvsFloat("device", "kpV", MPrj::kp_v_default);
-    kiV = Tools->readNvsFloat("device", "kiV", MPrj::ki_v_default);
-    kdV = Tools->readNvsFloat("device", "kdV", MPrj::kd_v_default);
-
-    mark = 3;
-    Display->drawLabel(               "DEVICE", 0);
-    Display->drawLabel("Adjusting Setpoint_V:", 1);
-    Display->clearLine(                         2);
-    Display->drawParFl(              "Sp, V :", 3, sp, 2, mark);
-    Display->drawParam(                 "Kp :", 4, kpV, 2, mark);
-    Display->drawParam(                 "Ki :", 5, kiV, 2, mark);
-    Display->drawParam(                 "Kd :", 6, kdV, 2, mark);
-    Display->clearLine(                         7);
-//    Board->ledsCyan();
-    Display->newBtn(MDisplay::GO, MDisplay::NEXT, MDisplay::BACK);
-  }
-
-  MState *MAdjPidV::fsm()
-  {
-    switch (Display->getKey())
-    {
-      case MDisplay::NEXT:  ( mark >= 6 ) ? mark = 3 : mark++;      // Переместить курсор
-                            Display->drawParFl("Sp, V :", 3, sp,  2, mark);
-                            Display->drawParam(   "Kp :", 4, kpV, 2, mark);
-                            Display->drawParam(   "Ki :", 5, kiV, 2, mark);
-                            Display->drawParam(   "Kd :", 6, kdV, 2, mark);
-                            break;
-      case MDisplay::GO:    switch (mark)
-                            {
-                            case 3:   return new MLoadSpV(Tools);
-                            case 4:   return new MLoadKpV(Tools);
-                            case 5:   return new MLoadKiV(Tools);
-                            case 6:   return new MLoadKdV(Tools);
-                            default:;
-                            }
-      case MDisplay::BACK:  return new MStart(Tools);
-      default:;
-    }
-               (Tools->getState() == Tools->getStatusPidVoltage()) ? 
-                                                Board->ledsGreen() : Board->ledsRed();
-    return this;
-  };
 
   MLoadSpV::MLoadSpV(MTools *Tools) : MState(Tools)
   {
-    Tools->writeNvsShort("device", "spV", sp);
+    Tools->writeNvsShort("device", "spV", spV);
     Tools->txSetPidCoeffV(kpV, kiV, kdV);           // 0x41 Применить
     mark = 3;
-//    Display->drawLabel("DEVICE",                0);
     Display->drawLabel("Adjusting Setpoint V:", 1);
-    Display->clearLine(                         2);
-    Display->drawParFl(              "Sp, V :", 3, sp, 2, mark);
+    Display->drawParFl(              "Sp, V :", 3, spV, 2, mark);
     Display->clearLine(                         4, 7);
-    Display->newBtn(MDisplay::PAUSE, MDisplay::UP, MDisplay::DN);
+    Display->newBtn(MDisplay::SAVE, MDisplay::UP, MDisplay::DN);
   }
 
   MState *MLoadSpV::fsm()
   {
     switch (Display->getKey())
     {
-      case MDisplay::PAUSE: Tools->writeNvsShort("device", "spV", sp);
+      case MDisplay::SAVE:  Tools->writeNvsShort("device", "spV", spV);
                             // Включить (0x22)или отключить (0x21)    // д.б. STOP/GO
         (Tools->getState() == Tools->getStatusPidVoltage()) ?
-                                       Tools->txPowerStop() : Tools->txChargeVGo(sp); // 0x22 Применить
+                                       Tools->txPowerStop() : Tools->txPowerAuto(spV, spI); // 0x20 Применить
                             return new MAdjPidV(Tools);
-      case MDisplay::UP:    sp = Tools->updnInt(sp, dn, up, delta);
-  //                        Display->drawLabel(       "DEVICE", 0);
+      case MDisplay::UP:    spV = Tools->updnInt(spV, dn, up, delta);
                             Display->drawLabel("Sp V changed:", 1);
-  //                        Display->clearLine(                 2);
-                            Display->drawParFl(      "Sp, V :", 3, sp, 2, mark);
+                            Display->drawParFl(      "Sp, V :", 3, spV, 2, mark);
                             //Tools->txPowerMode(sp, sp_i_default, MCommands::RU); // 0x22 Применить
-                            Tools->txChargeVGo(sp); // 0x22 Применить
+                            //Tools->txChargeVGo(spV); // 0x22 Применить
                             break;
-      case MDisplay::DN:    sp = Tools->updnInt(sp, dn, up, -delta);
-  //                        Display->drawLabel(       "DEVICE", 0);
+      case MDisplay::DN:    spV = Tools->updnInt(spV, dn, up, -delta);
                             Display->drawLabel("Sp V changed:", 1);
-  //                        Display->clearLine(                 2);
-                            Display->drawParFl(       "Sp V :", 3, sp, 2, mark);
+                            Display->drawParFl(       "Sp V :", 3, spV, 2, mark);
                             //Tools->txPowerMode(sp, sp_i_default, MCommands::RU); // 0x22 Применить
-                            Tools->txChargeVGo(sp); // 0x22 Применить;
+                            //Tools->txChargeVGo(sp); // 0x22 Применить;
                             break;
       default:;
     }
@@ -546,7 +628,7 @@ namespace MDevice
     Display->drawLabel(         "DEVICE", 0);
     Display->drawLabel("Adjusting kp V:", 1);
     Display->drawParam(           "Kp :", 3, kpV, 2);
-    Display->clearLine(                   4, 6);
+    Display->clearLine(                   4, 7);
     mark = 3;
     Display->newBtn(MDisplay::SAVE, MDisplay::UP, MDisplay::DN);
   }
@@ -559,16 +641,14 @@ namespace MDevice
                             Tools->txSetPidCoeffV(kpV, kiV, kdV);       // 0x41 Применить
                             return new MAdjPidV(Tools);
       case MDisplay::UP:    kpV = Tools->updnFloat(kpV, dn, up, +0.01);
-//                            Display->drawLabel("DEVICE", 0);
                             Display->drawLabel("Voltage kp changed:", 1);
                             Display->drawParam(             "Kp V :", 3, kpV, 2, mark);
-                      //      Tools->txSetPidCoeffV(kpV, kiV, kdV);       // 0x41 Применить
+                            Tools->txSetPidCoeffV(kpV, kiV, kdV);       // 0x41 Применить
                             break;
       case MDisplay::DN:    kpV = Tools->updnFloat( kpV, dn, up, -0.01);
-//                            Display->drawLabel("DEVICE", 0 );
                             Display->drawLabel("Voltage kp changed:", 1);
                             Display->drawParam(             "Kp V :", 3, kpV, 2, mark);
-                      //      Tools->txSetPidCoeffV(kpV, kiV, kdV);       // 0x41 Применить
+                            Tools->txSetPidCoeffV(kpV, kiV, kdV);       // 0x41 Применить
                             break;
       default:;
     }
@@ -583,7 +663,7 @@ namespace MDevice
     Display->drawLabel(         "DEVICE", 0);
     Display->drawLabel("Adjusting ki V:", 1);
     Display->drawParam(           "Ki :", 3, kiV, 2);
-    Display->clearLine(                   4, 6);
+    Display->clearLine(                   4, 7);
     mark = 3;
     Display->newBtn(MDisplay::SAVE, MDisplay::UP, MDisplay::DN);
   }
@@ -597,17 +677,15 @@ namespace MDevice
                                 return new MAdjPidV(Tools);
       case MDisplay::UP:
         kiV = Tools->updnFloat(kiV, dn, up, +0.01);
-//        Display->drawLabel("DEVICE", 0);
         Display->drawLabel("Voltage ki changed:", 1);
         Display->drawParam(             "Ki V :", 3, kiV, 2, mark);
-  //      Tools->txSetPidCoeffV(kpV, kiV, kdV);             // 0x41 Применить
+        Tools->txSetPidCoeffV(kpV, kiV, kdV);             // 0x41 Применить
         break;
       case MDisplay::DN:
         kiV = Tools->updnFloat(kiV, dn, up, -0.01);
-//        Display->drawLabel("DEVICE", 0);
         Display->drawLabel("Voltage ki changed:", 1);
         Display->drawParam(             "Ki V :", 3, kiV, 2, mark);
-  //      Tools->txSetPidCoeffV(kpV, kiV, kdV);             // 0x41 Применить
+        Tools->txSetPidCoeffV(kpV, kiV, kdV);             // 0x41 Применить
         break;
       default:;
     }
@@ -619,10 +697,9 @@ namespace MDevice
   //========== MLoadKdV, ввод параметра KD PID-регулятора напряжения =========
   MLoadKdV::MLoadKdV(MTools *Tools) : MState(Tools)
   {
-//    Display->drawLabel("DEVICE", 0);
     Display->drawLabel("Adjusting kd V:", 1);
     Display->drawParam(           "Kd :", 3, kdV, 2);
-    Display->clearLine(                   4, 6);
+    Display->clearLine(                   4, 7);
     mark = 3;
     Display->newBtn(MDisplay::SAVE, MDisplay::UP, MDisplay::DN);
   }
@@ -635,16 +712,14 @@ namespace MDevice
                             Tools->txSetPidCoeffV(kpV, kiV, kdV);       // 0x41 Применить
                             return new MAdjPidV(Tools);
       case MDisplay::UP:    kdV = Tools->updnFloat(kdV, dn, up, +0.01);
-//                            Display->drawLabel("DEVICE", 0);
                             Display->drawLabel("Voltage kd changed:", 1);
                             Display->drawParam(             "Kd V :", 3, kdV, 2, mark);
-                      //      Tools->txSetPidCoeffV(kpV, kiV, kdV);               // 0x41 Применить
+                            Tools->txSetPidCoeffV(kpV, kiV, kdV);               // 0x41 Применить
                             break;
       case MDisplay::DN:    kdV = Tools->updnFloat(kdV, dn, up, -0.01);
-//                            Display->drawLabel("DEVICE", 0);
                             Display->drawLabel("Voltage kd changed:", 1);
                             Display->drawParam(             "Kd V :", 3, kdV, 2, mark);
-                      //      Tools->txSetPidCoeffV(kpV, kiV, kdV);               // 0x41 Применить
+                            Tools->txSetPidCoeffV(kpV, kiV, kdV);               // 0x41 Применить
                             break;
       default:;
     }
@@ -653,62 +728,16 @@ namespace MDevice
     return this;
   };  //MLoadKdV
 
-  //========================================================================= MAdjPidI
-  //  
-  MAdjPidI::MAdjPidI(MTools *Tools) : MState(Tools)
-  {
-    sp   = Tools->readNvsShort("device", "spI", sp_i_default);
-    // Восстановление пользовательских kp, ki, kp
-    kpI = Tools->readNvsFloat("device", "kpI", MPrj::kp_i_default);
-    kiI = Tools->readNvsFloat("device", "kiI", MPrj::ki_i_default);
-    kdI = Tools->readNvsFloat("device", "kdI", MPrj::kd_i_default);
-    mark = 3;
-    Display->drawLabel(           "DEVICE", 0);
-    Display->drawLabel(  "Adjusting Sp_I:", 1);
-    Display->clearLine(                     2);
-    Display->drawParFl(          "Sp, A :", 3,   sp, 2, mark);
-    Display->drawParam(             "Kp :", 4,  kpI, 2, mark);
-    Display->drawParam(             "Ki :", 5,  kiI, 2, mark);
-    Display->drawParam(             "Kd :", 6,  kdI, 2, mark);
-    Display->clearLine(                     7);
-    Display->newBtn(MDisplay::GO, MDisplay::NEXT, MDisplay::BACK);
-  }
-
-  MState *MAdjPidI::fsm()
-  {
-    switch (Display->getKey())
-    {
-      case MDisplay::NEXT:  (mark >= 6) ? mark = 3 : mark++;
-                            Display->drawParFl("Sp, A :", 3, sp , 2, mark);
-                            Display->drawParam(   "Kp :", 4, kpI, 2, mark);
-                            Display->drawParam(   "Ki :", 5, kiI, 2, mark);
-                            Display->drawParam(   "Kd :", 6, kdI, 2, mark);
-                            break;
-      case MDisplay::GO:    switch (mark)
-                            {
-                              case 3:  return new MLoadSpI(Tools);
-                              case 4:  return new MLoadKpI(Tools);
-                              case 5:  return new MLoadKiI(Tools);
-                              case 6:  return new MLoadKdI(Tools);
-                              default:;
-                            }
-      case MDisplay::BACK:  return new MStart(Tools);
-      default:;
-    }
-    (Tools->getState() == Tools->getStatusPidCurrent()) ? 
-                                     Board->ledsGreen() : Board->ledsRed();
-    return this;
-  };
 
 
   MLoadSpI::MLoadSpI(MTools *Tools) : MState(Tools)
   {
-    Tools->writeNvsShort("device", "spI", sp);
+    Tools->writeNvsShort("device", "spI", spI);
     Tools->txSetPidCoeffV(kpI, kiI, kdI);           // 0x41 Применить
     mark = 3;
     Display->drawLabel("Adjusting Setpoint I:", 1);
-    Display->drawParFl(              "Sp, A :", 3, sp, 2, mark);
-    Display->clearLine(                         4, 6);
+    Display->drawParFl(              "Sp, A :", 3, spI, 2, mark);
+    Display->clearLine(                         4, 7);
     Display->newBtn(MDisplay::PAUSE, MDisplay::UP, MDisplay::DN);
   }
 
@@ -716,24 +745,20 @@ namespace MDevice
   {
     switch (Display->getKey())
     {
-      case MDisplay::PAUSE: Tools->writeNvsShort("device", "spI", sp);
-                            // Включить (0x22)или отключить (0x21)
+      case MDisplay::PAUSE: Tools->writeNvsShort("device", "spI", spI);
+                            // Включить (0x20)или отключить (0x21)
                      (Tools->getState() == Tools->getStatusPidCurrent()) ?
-                                                    Tools->txPowerStop() : Tools->txChargeIGo(sp);
+                                                    Tools->txPowerStop() : Tools->txPowerAuto(spV, spI);
                             return new MAdjPidI(Tools);
-      case MDisplay::UP:    sp = Tools->updnInt(sp, dn, up, delta);
-  //                        Display->drawLabel(       "DEVICE", 0);
+      case MDisplay::UP:    spI = Tools->updnInt(spI, dn, up, delta);
                             Display->drawLabel("Sp I changed:", 1);
-  //                        Display->clearLine(                 2);
-                            Display->drawParFl(      "Sp, A :", 3, sp, 2, mark);
-                            Tools->txChargeIGo(sp);                         // 0x22 Применить
+                            Display->drawParFl(      "Sp, A :", 3, spI, 2, mark);
+                            //Tools->txChargeIGo(sp);                         // 0x22 Применить
                             break;
-      case MDisplay::DN:    sp = Tools->updnInt(sp, dn, up, -delta);
-  //                        Display->drawLabel(       "DEVICE", 0);
+      case MDisplay::DN:    spI = Tools->updnInt(spI, dn, up, -delta);
                             Display->drawLabel("Sp I changed:", 1);
-  //                        Display->clearLine(                 2);
-                            Display->drawParFl(       "Sp A :", 3, sp, 2, mark);
-                            Tools->txChargeIGo(sp);                         // 0x22 Применить
+                            Display->drawParFl(       "Sp A :", 3, spI, 2, mark);
+                            //Tools->txChargeIGo(sp);                         // 0x22 Применить
                             break;
       default:;
     }
@@ -746,10 +771,9 @@ namespace MDevice
 
   MLoadKpI::MLoadKpI(MTools *Tools) : MState(Tools)
   {
-    Display->drawLabel(         "DEVICE", 0);
     Display->drawLabel("Adjusting kp I:", 1);
     Display->drawParam(           "Kp :", 3, kpI, 2);
-    Display->clearLine(                   4, 5);
+    Display->clearLine(                   4, 7);
     mark = 3;
     Display->newBtn(MDisplay::SAVE, MDisplay::UP, MDisplay::DN);
   }
@@ -762,16 +786,15 @@ namespace MDevice
                             Tools->txSetPidCoeffI(kpI, kiI, kdI);         // 0x41 Применить
                             return new MAdjPidV(Tools);
       case MDisplay::UP:    kpI = Tools->updnFloat(kpI, dn, up, +0.01);
-                            Display->drawLabel("DEVICE", 0);
                             Display->drawLabel("Current kp changed:", 1);
                             Display->drawParam("Kp I :", 3, kpI, 2, mark);
-                      //      Tools->txSetPidCoeffI(kpI, kiI, kdI); // 0x41 Применить
+                            Tools->txSetPidCoeffI(kpI, kiI, kdI); // 0x41 Применить
                             break;
       case MDisplay::DN:    kpI = Tools->updnFloat(kpI, dn, up, -0.01);
                             Display->drawLabel("DEVICE", 0);
                             Display->drawLabel("Current kp changed:", 1);
                             Display->drawParam("Kp I :", 3, kpI, 2, mark);
-                      //      Tools->txSetPidCoeffI(kpI, kiI, kdI); // 0x41 Применить
+                            Tools->txSetPidCoeffI(kpI, kiI, kdI); // 0x41 Применить
                             break;
       default:;
     }
@@ -784,10 +807,9 @@ namespace MDevice
 
   MLoadKiI::MLoadKiI(MTools *Tools) : MState(Tools)
   {
-    Display->drawLabel("DEVICE", 0);
     Display->drawLabel("Adjusting ki I:", 1);
-    Display->drawParam("Ki :", 3, kiI, 2);
-    Display->clearLine(4, 5);
+    Display->drawParam(           "Ki :", 3, kiI, 2);
+    Display->clearLine(                   4, 7);
     mark = 3;
     Display->newBtn(MDisplay::SAVE, MDisplay::UP, MDisplay::DN);
   }
@@ -796,26 +818,23 @@ namespace MDevice
   {
     switch (Display->getKey())
     {
-      case MDisplay::SAVE:    Tools->writeNvsFloat("device", "kiI", kiI);
-                              Tools->txSetPidCoeffI(kpI, kiI, kdI); // 0x41 Применить
-                              return new MAdjPidV(Tools);
-      case MDisplay::UP:      kiI = Tools->updnFloat(kiI, dn, up, +0.01);
-        Display->drawLabel("DEVICE", 0);
-        Display->drawLabel("Current ki changed:", 1);
-        Display->drawParam("Ki I :", 3, kiI, 2, mark);
-  //      Tools->txSetPidCoeffI(kpI, kiI, kdI); // 0x41 Применить
-        break;
-      case MDisplay::DN:
-        kiI = Tools->updnFloat(kiI, dn, up, -0.01);
-        Display->drawLabel("DEVICE", 0);
-        Display->drawLabel("Current ki changed:", 1);
-        Display->drawParam("Ki I :", 3, kiI, 2, mark);
-  //      Tools->txSetPidCoeffI(kpI, kiI, kdI); // 0x41 Применить
-        break;
+      case MDisplay::SAVE:  Tools->writeNvsFloat("device", "kiI", kiI);
+                            Tools->txSetPidCoeffI(kpI, kiI, kdI); // 0x41 Применить
+                            return new MAdjPidV(Tools);
+      case MDisplay::UP:    kiI = Tools->updnFloat(kiI, dn, up, +0.01);
+                            Display->drawLabel("Current ki changed:", 1);
+                            Display->drawParam(             "Ki I :", 3, kiI, 2, mark);
+                            Tools->txSetPidCoeffI(kpI, kiI, kdI); // 0x41 Применить
+                            break;
+      case MDisplay::DN:    kiI = Tools->updnFloat(kiI, dn, up, -0.01);
+                            Display->drawLabel("Current ki changed:", 1);
+                            Display->drawParam(             "Ki I :", 3, kiI, 2, mark);
+                            Tools->txSetPidCoeffI(kpI, kiI, kdI); // 0x41 Применить
+                            break;
       default:;
     }
-    (Tools->getState() == Tools->getStatusPidCurrent()) ? 
-                                     Board->ledsGreen() : Board->ledsRed();
+                      (Tools->getState() == Tools->getStatusPidCurrent()) ? 
+                                                      Board->ledsGreen() : Board->ledsRed();
     return this;
   };
 
@@ -823,10 +842,9 @@ namespace MDevice
 
   MLoadKdI::MLoadKdI(MTools *Tools) : MState(Tools)
   {
-    Display->drawLabel("DEVICE", 0);
     Display->drawLabel("Adjusting kd I:", 1);
-    Display->drawParam("Kd :", 3, kdI, 2);
-    Display->clearLine(4, 5);
+    Display->drawParam(           "Kd :", 3, kdI, 2);
+    Display->clearLine(                   4, 7);
     mark = 3;
     Display->newBtn(MDisplay::SAVE, MDisplay::UP, MDisplay::DN);
   }
@@ -839,16 +857,14 @@ namespace MDevice
                             Tools->txSetPidCoeffI(kpI, kiI, kdI); // 0x41 Применить
                             return new MAdjPidV(Tools);
       case MDisplay::UP:    kdI = Tools->updnFloat(kdI, dn, up, +0.01);
-                            Display->drawLabel("DEVICE", 0);
                             Display->drawLabel("Current kd changed:", 1);
-                            Display->drawParam("Kd I :", 3, kdI, 2, mark);
-                      //      Tools->txSetPidCoeffI(kpI, kiI, kdI); // 0x41 Применить
+                            Display->drawParam(             "Kd I :", 3, kdI, 2, mark);
+                            Tools->txSetPidCoeffI(kpI, kiI, kdI); // 0x41 Применить
                             break;
       case MDisplay::DN:    kdI = Tools->updnFloat(kdI, dn, up, -0.01);
-                            Display->drawLabel("DEVICE", 0);
                             Display->drawLabel("Current kd changed:", 1);
-                            Display->drawParam("Kd I :", 3, kdI, 2, mark);
-                      //      Tools->txSetPidCoeffI(kpI, kiI, kdI); // 0x41 Применить
+                            Display->drawParam(             "Kd I :", 3, kdI, 2, mark);
+                            Tools->txSetPidCoeffI(kpI, kiI, kdI); // 0x41 Применить
                             break;
       default:;
     }
@@ -864,15 +880,15 @@ namespace MDevice
   MAdjPidD::MAdjPidD(MTools *Tools) : MState(Tools)
   {
     // Восстановление пользовательских sp, kp, ki, kp
-    sp  = Tools->readNvsShort("device", "spD", sp_d_default);
+    spD  = Tools->readNvsShort("device", "spD", sp_d_default);
     kpD = Tools->readNvsFloat("device", "kpD", MPrj::kp_d_default);
     kiD = Tools->readNvsFloat("device", "kiD", MPrj::ki_d_default);
     kdD = Tools->readNvsFloat("device", "kdD", MPrj::kd_d_default);
     mark = 3;
-    Display->drawLabel("DEVICE",            0);
-    Display->drawLabel("Adjusting PID_D:",  1);
+    Display->drawLabel(           "DEVICE", 0);
+    Display->drawLabel( "Adjusting PID_D:", 1);
     Display->clearLine(                     2);
-    Display->drawParFl(    "Setpoint, A :", 3, sp,  2, mark);
+    Display->drawParFl(    "Setpoint, A :", 3, spD,  2, mark);
     Display->drawParam(             "Kp :", 4, kpD, 2, mark);
     Display->drawParam(             "Ki :", 5, kiD, 2, mark);
     Display->drawParam(             "Kd :", 6, kdD, 2, mark);
@@ -885,7 +901,7 @@ namespace MDevice
     switch ( Display->getKey() )
     {
       case MDisplay::NEXT:    (mark >= 6) ? mark = 3 : mark++;
-                              Display->drawParFl("setpoint, A :", 3,  sp, 2, mark);
+                              Display->drawParFl("setpoint, A :", 3,  spD, 2, mark);
                               Display->drawParam(         "Kp :", 4, kpD, 2, mark);
                               Display->drawParam(         "Ki :", 5, kiD, 2, mark);
                               Display->drawParam(         "Kd :", 6, kdD, 2, mark);
@@ -912,13 +928,13 @@ namespace MDevice
 
   MLoadSp::MLoadSp(MTools *Tools) : MState(Tools)
   {
-    Tools->writeNvsShort("device", "spD", sp);
+    Tools->writeNvsShort("device", "spD", spD);
     Tools->txSetPidCoeffD(kpD, kiD, kdD);           // 0x41 Применить
     mark = 3;
-    Display->drawLabel("DEVICE",                0);
+    Display->drawLabel(               "DEVICE", 0);
     Display->drawLabel("Adjusting Setpoint D:", 1);
     Display->clearLine(                         2);
-    Display->drawParFl(        "Setpoint, A :", 3, sp, 2, mark);
+    Display->drawParFl(        "Setpoint, A :", 3, spD, 2, mark);
     Display->clearLine(                         4, 7);
     Display->newBtn(MDisplay::PAUSE, MDisplay::UP, MDisplay::DN);
   }
@@ -927,24 +943,20 @@ namespace MDevice
   {
     switch (Display->getKey())
     {
-      case MDisplay::PAUSE:  Tools->writeNvsShort("device", "spD", sp);
+      case MDisplay::PAUSE:  Tools->writeNvsShort("device", "spD", spD);
                             // Включить (0x24)или отключить (0x21)    // д.б. STOP/GO
             (Tools->getState() == Tools->getStatusPidDiscurrent()) ?
-                                              Tools->txPowerStop() : Tools->txDischargeGo(sp);
+                                              Tools->txPowerStop() : Tools->txDischargeGo(spD);
                             return new MAdjPidD(Tools);
-      case MDisplay::UP:    sp = Tools->updnInt(sp, dn, up, delta);
-  //                        Display->drawLabel(             "DEVICE", 0);
+      case MDisplay::UP:    spD = Tools->updnInt(spD, dn, up, delta);
                             Display->drawLabel("Setpoint D changed:", 1);
-  //                        Display->clearLine(                       2);
-                            Display->drawParFl(      "Setpoint, A :", 3, sp, 2, mark);
-                            Tools->txDischargeGo(sp);                       // 0x24 Применить
+                            Display->drawParFl(      "Setpoint, A :", 3, spD, 2, mark);
+                            Tools->txDischargeGo(spD);                       // 0x24 Применить
                             break;
-      case MDisplay::DN:    sp = Tools->updnInt(sp, dn, up, -delta);
-  //                        Display->drawLabel(             "DEVICE", 0);
+      case MDisplay::DN:    spD = Tools->updnInt(spD, dn, up, -delta);
                             Display->drawLabel("Setpoint D changed:", 1);
-  //                        Display->clearLine(                       2);
-                            Display->drawParFl(      "Setpoint, A :", 3, sp, 2, mark);
-                            Tools->txDischargeGo(sp);                       // 0x24 Применить
+                            Display->drawParFl(      "Setpoint, A :", 3, spD, 2, mark);
+                            Tools->txDischargeGo(spD);                       // 0x24 Применить
                             break;
       default:;
     }
@@ -958,7 +970,7 @@ namespace MDevice
   MLoadKpD::MLoadKpD(MTools *Tools) : MState(Tools)
   {
     mark = 3;
-    Display->drawLabel("DEVICE",          0);
+    Display->drawLabel(         "DEVICE", 0);
     Display->drawLabel("Adjusting kp D:", 1);
     Display->clearLine(                   2);
     Display->drawParam(           "Kp :", 3, kpD, 2, mark);
@@ -975,16 +987,14 @@ namespace MDevice
                             Tools->txSetPidCoeffD(kpD, kiD, kdD);           // 0x41 Применить
                             return new MAdjPidD(Tools);
       case MDisplay::UP:    kpD = Tools->updnFloat(kpD, dn, up, delta);
-  //                        Display->drawLabel("DEVICE",              0);
                             Display->drawLabel("kp changed:", 1);
-  //                        Display->clearLine(                       2);
-                            Display->drawParam(             "Kp D :", 3, kpD, 2, mark);
+                            Display->drawParam(     "Kp D :", 3, kpD, 2, mark);
                             Tools->txSetPidCoeffD(kpD, kiD, kdD);           // 0x41 Применить
                             break;
       case MDisplay::DN:    kpD = Tools->updnFloat(kpD, dn, up, -delta);
-  //                        Display->drawLabel(             "DEVICE", 0);
+  //                        Display->drawLabel(     "DEVICE", 0);
                             Display->drawLabel("kp changed:", 1);
-                            Display->drawParam(             "Kp D :", 3, kpD, 2, mark);
+                            Display->drawParam(     "Kp D :", 3, kpD, 2, mark);
                             Tools->txSetPidCoeffD(kpD, kiD, kdD);           // 0x41 Применить
                             break;
       default:;
@@ -1001,7 +1011,6 @@ namespace MDevice
     mark = 3;
     Display->drawLabel(         "DEVICE", 0);
     Display->drawLabel("Adjusting ki D:", 1);
-
     Display->drawParam(           "Ki :", 3, kiD, 2, mark);
     Display->clearLine(                   4, 7);
     Display->newBtn(MDisplay::SAVE, MDisplay::UP, MDisplay::DN);
@@ -1015,16 +1024,12 @@ namespace MDevice
                             Tools->txSetPidCoeffD(kpD, kiD, kdD);           // 0x41 Применить
                             return new MAdjPidD(Tools);
       case MDisplay::UP:    kiD = Tools->updnFloat(kiD, dn, up, +0.01);
-  //                        Display->drawLabel(     "DEVICE", 0);
                             Display->drawLabel("ki changed:", 1);
-
                             Display->drawParam(     "Ki D :", 3, kiD, 2, mark);
                             Tools->txSetPidCoeffD(kpD, kiD, kdD);           // 0x41 Применить
                             break;
       case MDisplay::DN:    kiD = Tools->updnFloat(kiD, dn, up, -0.01);
-  //                        Display->drawLabel(             "DEVICE", 0);
                             Display->drawLabel("ki changed:", 1);
-
                             Display->drawParam(     "Ki D :", 3, kiD, 2, mark);
                             Tools->txSetPidCoeffD(kpD, kiD, kdD);           // 0x41 Применить
                             break;
@@ -1040,9 +1045,8 @@ namespace MDevice
   MLoadKdD::MLoadKdD(MTools *Tools) : MState(Tools)
   {
     mark = 3;
-    Display->drawLabel(         "DEVICE", 0);
+//    Display->drawLabel(         "DEVICE", 0);
     Display->drawLabel("Adjusting kd D:", 1);
-
     Display->drawParam(           "Kd :", 3, kdD, 2, mark);
     Display->clearLine(                   4, 7);
     Display->newBtn(MDisplay::SAVE, MDisplay::UP, MDisplay::DN);
@@ -1056,16 +1060,12 @@ namespace MDevice
                             Tools->txSetPidCoeffD(kpD, kiD, kdD);           // 0x41 Применить
                             return new MAdjPidD(Tools);
       case MDisplay::UP:    kdD = Tools->updnFloat(kdD, dn, up, +0.01);
-                            Display->drawLabel(     "DEVICE", 0);
                             Display->drawLabel("kd changed:", 1);
-
                             Display->drawParam(     "Kd D :", 3, kdD, 2, mark);
                             Tools->txSetPidCoeffD(kpD, kiD, kdD);               // 0x41 Применить
                             break;
       case MDisplay::DN:    kdD = Tools->updnFloat(kdD, dn, up, -0.01);
-  //                        Display->drawLabel(     "DEVICE", 0);
                             Display->drawLabel("kd changed:", 1);
-
                             Display->drawParam(     "Kd D :", 3, kdD, 2, mark);
                             Tools->txSetPidCoeffD(kpD, kiD, kdD);               // 0x41 Применить
                             break;

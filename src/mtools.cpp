@@ -6,6 +6,7 @@
 */
 
 #include "mtools.h"
+#include "project_config.h"
 #include "mcmd.h"
 #include "driver/mcommands.h"
 #include "board/mboard.h"
@@ -327,12 +328,17 @@ void MTools::txPowerAuto(short spV, short spI)
   setpointU = spV;
   setpointI = spI;
   buffCmd   = MCmd::cmd_power_auto;
+  vTaskDelay(80 / portTICK_PERIOD_MS);
 } 
 
-  // Команда перевода в безопасный режим (выключение 
-void MTools::txPowerStop()                            {buffCmd = MCmd::cmd_power_stop;}               // 0x21
+  // Команда перевода в безопасный режим (выключение)               // 0x21 
+void MTools::txPowerStop()
+{
+  buffCmd = MCmd::cmd_power_stop;
+  vTaskDelay(80 / portTICK_PERIOD_MS);
+}
 
-  // Команда управления PID-регулятором с выбором режима                                              // 0x22
+  // Команда управления PID-регулятором с выбором режима                 // 0x22
 // void MTools::txPowerMode(float spV, float spI, uint8_t mode)
 // {
 //   setpointU = (short)(spV * 1000);
@@ -348,9 +354,9 @@ void MTools::txPowerMode(short spV, short spI, uint8_t mode)
   buffCmd   = MCmd::cmd_power_mode;
 }
 
-void MTools::txChargeVGo(short spV) {txPowerMode(spV, 0u, MCommands::RU);}   // 0x22
+void MTools::txPowerVGo(short spV, short spI) {txPowerMode(spV, spI, MPrj::RU);}   // 0x22
 
-void MTools::txChargeIGo(short spI) {txPowerMode(0u, spI, MCommands::RI);}   // 0x22
+void MTools::txPowerIGo(short spV, short spI) {txPowerMode(spV, spI, MPrj::RI);}   // 0x22
 
   // Команда управления pid-регулятором разряда                                                        // 0x24
 // void MTools::txDischargeGo(float spI)
@@ -368,29 +374,36 @@ void MTools::txDischargeGo(short spI)
 //const uint8_t cmd_voltage_adj               = 0x25; // Регулировка напряжения
 //const uint8_t cmd_current_adj               = 0x26; // Регулировка тока заряда
 //const uint8_t cmd_discurrent_adj            = 0x27; // Регулировка тока разряда
-  // 0x25 Регулировка напряжения
+  // 0x25 Регулировка напряжения (милливольты)
 void MTools::txVoltageAdj(short spV)
 {
-  pidMode   = MCommands::RU;
+//  pidMode   = MPrj::RU;
   setpointU = spV;
   buffCmd = MCmd::cmd_current_adj;
 }
 
-  // 0x26 Регулировка тока заряда
+  // 0x26 Регулировка тока заряда (миллиамперы)
 void MTools::txCurrentAdj(short spI)
 {
-  pidMode   = MCommands::RI;
+//  pidMode   = MPrj::RI;
   setpointI = spI;
   buffCmd = MCmd::cmd_current_adj;
 }
 
-  // 0x27 Регулировка тока разряда
+  // 0x27 Регулировка тока разряда (миллиамперы)
 void MTools::txDiscurrentAdj(short spD)
 {
-  pidMode   = MCommands::RD;
-  setpointD = spD;
+//  pidMode   = MPrj::RD;
+  setpointD = abs(spD);
   buffCmd = MCmd::cmd_discurrent_adj;
 }
+
+  // 0x28
+void MTools::txPowerOn() 
+{
+  buffCmd = MCmd::cmd_power_on;
+}
+
 
 
 
@@ -437,36 +450,46 @@ void MTools::txSetPidCoeff(unsigned short m, float _kp, float _ki, float _kd)   
     buffCmd = MCmd::cmd_pid_write_coefficients;                                                      // 0x41 Запись
 }
 
+  // 0x41 Запись
 void MTools::txSetPidCoeffV(float _kp, float _ki, float _kd)
 {
-    pidMode = 1;
-    kp      = (unsigned short) (_kp * pMult);
-    ki      = (unsigned short) (_ki * pMult);
-    kd      = (unsigned short) (_kd * pMult);
-    buffCmd = MCmd::cmd_pid_write_coefficients;                                                      // 0x41 Запись
+  pidMode = MPrj::RU; //      1;
+  kp      = (unsigned short) (_kp * pMult);
+  ki      = (unsigned short) (_ki * pMult);
+  kd      = (unsigned short) (_kd * pMult);
+  buffCmd = MCmd::cmd_pid_write_coefficients;
+  vTaskDelay(80 / portTICK_PERIOD_MS);
 }
 
+  // 0x41 Запись
 void MTools::txSetPidCoeffI(float _kp, float _ki, float _kd)
 {
-    pidMode = 2;
-    kp      = (unsigned short) (_kp * pMult);
-    ki      = (unsigned short) (_ki * pMult);
-    kd      = (unsigned short) (_kd * pMult);
-    buffCmd = MCmd::cmd_pid_write_coefficients;                                                    // 0x41 Запись
+  pidMode = MPrj::RI;   //2;
+  kp      = (unsigned short) (_kp * pMult);
+    
+//  Serial.print("\n_kp="); Serial.print(_kp, 2);
+//  Serial.print("\npMult=0x"); Serial.print(pMult, HEX);
+//  Serial.print("\nkp=0x"); Serial.print(kp, HEX);
+
+  ki      = (unsigned short) (_ki * pMult);
+  kd      = (unsigned short) (_kd * pMult);
+  buffCmd = MCmd::cmd_pid_write_coefficients; 
+  vTaskDelay(80 / portTICK_PERIOD_MS);
 }
 
 void MTools::txSetPidCoeffD(float _kp, float _ki, float _kd)
 {
-    pidMode = 3;
-    kp      = (unsigned short) (_kp * pMult);
-    ki      = (unsigned short) (_ki * pMult);
-    kd      = (unsigned short) (_kd * pMult);
-    buffCmd = MCmd::cmd_pid_write_coefficients;                                                       // 0x41 Запись
+  pidMode = MPrj::RD;   //3;
+  kp      = (unsigned short) (_kp * pMult);
+  ki      = (unsigned short) (_ki * pMult);
+  kd      = (unsigned short) (_kd * pMult);
+  buffCmd = MCmd::cmd_pid_write_coefficients;   // 0x41 Запись
+  vTaskDelay(80 / portTICK_PERIOD_MS);
 
-  Serial.print("pMult=0x"); Serial.println(pMult, HEX);
-  Serial.print("kp=0x");    Serial.println(kp, HEX);
-  Serial.print("ki=0x");    Serial.println(ki, HEX);
-  Serial.print("kd=0x");    Serial.println(kd, HEX);
+  // Serial.print("pMult=0x"); Serial.println(pMult, HEX);
+  // Serial.print("kp=0x");    Serial.println(kp, HEX);
+  // Serial.print("ki=0x");    Serial.println(ki, HEX);
+  // Serial.print("kd=0x");    Serial.println(kd, HEX);
 
 } // 0x41
 
@@ -489,7 +512,11 @@ void MTools::txSetPidReconfig(uint8_t _m, float _kp, float _ki, float _kd, uint1
     buffCmd = MCmd::cmd_pid_reconfigure;                                                              // 0x43 Запись
 }
 
-void MTools::txPidClear()                             {buffCmd = MCmd::cmd_pid_clear;}                // 0x44
+void MTools::txPidClear()
+{
+  buffCmd = MCmd::cmd_pid_clear;               // 0x44
+  vTaskDelay(80 / portTICK_PERIOD_MS);
+} 
 
 void MTools::txGetPidTreaty()                         {buffCmd = MCmd::cmd_pid_read_treaty;}          // 0x47 Get shift, bits, hz
 
@@ -513,7 +540,7 @@ void MTools::txSetPidFrequency(unsigned short hz)
 
 void MTools::txSetCurrent(unsigned short val)     // 0x59
 {
-  pidMode   = MCommands::RI;
+  pidMode   = MPrj::RI;
   setpointI = val;
   buffCmd = MCmd::cmd_write_current;              // 0x59
 }
@@ -533,7 +560,7 @@ void MTools::txSetCurrent(unsigned short val)     // 0x59
   // 0x5A Установка тока разряда                20231022
 void MTools::txSetDiscurrent(unsigned short val)
 {
-  pidMode   = MCommands::RD;
+  pidMode   = MPrj::RD;
   setpointD = val;
   buffCmd = MCmd::cmd_write_discurrent;   // 0x5A
 }  // doSetDiscurrent();

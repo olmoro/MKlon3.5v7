@@ -25,13 +25,13 @@ class MCommands
     MWake  * Wake;    // = nullptr;
 
   public:
-      enum ROLES
-    {
-      RS = 0,    // режим прямого регулирования
-      RU,        // режим управления напряжением
-      RI,        // режим управления током
-      RD         // режим управления током разряда
-    };
+    //   enum ROLES
+    // {
+    //   RS = 0,    // режим прямого регулирования
+    //   RU,        // режим управления напряжением
+    //   RI,        // режим управления током
+    //   RD         // режим управления током разряда
+    // };
   
   private:
       //Команды запроса данных в реальном времени и могут быть фоновыми
@@ -53,6 +53,7 @@ class MCommands
     void doVoltageAdj();                // 0x25 Регулировка напряжения
     void doCurrentAdj();                // 0x26 Регулировка тока заряда
     void doDiscurrentAdj();             // 0x27 Регулировка тока разряда 
+    void doPowerOn();               // 0x28
 
         // Команды работы с измерителем напряжения 
     void doGetFactorU();                // 0x30   
@@ -125,6 +126,7 @@ class MCommands
     void txU08(uint8_t id,  uint8_t value);
     void txU16(uint8_t id, uint16_t value);
     void txU32(uint8_t id, uint32_t value);
+
 
 };
 

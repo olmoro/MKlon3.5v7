@@ -178,15 +178,15 @@ class MTools
     void txPowerStop();                                     // 0x21
     //void txPowerMode(float spV, float spI, uint8_t mode);   // 0x22
     void txPowerMode(short spV, short spI, uint8_t mode);   // 0x22
-    void txChargeVGo(short spV);                            // 0x22
-    void txChargeIGo(short spI);                            // 0x22
+    void txPowerVGo(short spV, short spI);                            // 0x22
+    void txPowerIGo(short spV, short spI);                            // 0x22
     //void txDischargeGo(float spI);                          // 0x24
     void txDischargeGo(short spI);                          // 0x24
 
     void txVoltageAdj(short spV);                           // 0x25 Регулировка напряжения
     void txCurrentAdj(short spI);                           // 0x26 Регулировка тока заряда
     void txDiscurrentAdj(short spD);                        // 0x27 Регулировка тока разряда
-
+    void txPowerOn();                                   // 0x28
 
 
       // Команды работы с измерителем напряжения
@@ -304,7 +304,7 @@ class MTools
         По умолчанию
         param_mult = 0x0100
         param_max  = 0x00FF
-        Параметр hz в данной реализации всегда 10гц.
+        Параметр hz в данной реализации всегда 10гц.  - отменено 2023 
 
         Интегральный член kp должен быть ненулевым.
       */ 
@@ -317,8 +317,9 @@ class MTools
     static constexpr unsigned short param_mult  = (((0x1ULL << param_bits)) >> (param_bits - param_shift));
     static constexpr unsigned short param_hz    = 100U;
     // Из данных, полученных от драйвера, начальные - по умолчанию
-    unsigned short pMult = param_max;
+    unsigned short pMult = param_mult;      //_max;
     unsigned short pMax  = param_max;
+  //  static constexpr float fparh = (float)(param_max / param_mult);
     //unsigned short pHz   = param_hz;
     //unsigned short pidHz   = param_hz;
     short pidHz   = param_hz;
