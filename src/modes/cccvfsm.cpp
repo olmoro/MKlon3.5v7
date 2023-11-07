@@ -59,7 +59,7 @@ namespace MCccv
     вход и иное состояние. */
 
       //Отключить на всякий пожарный силовую часть.
-    Tools->txPowerStop();                 // 0x21  Команда драйверу
+    Tools->txPowerStop();                 // 0x21*  Команда драйверу
     /*  Параметры заряда восстанавливаются из энергонезависимой памяти. Пороговые значения 
     напряжений и токов рассчитываются исходя из типа батареи, её номинального напряжения и 
     емкости, введенные в режиме "OPTION".
@@ -123,12 +123,12 @@ namespace MCccv
 //  Serial.print("\nki="); Serial.print(kiI, 2);  
 //  Serial.print("\nkd="); Serial.print(kdI, 2);  
     
-    Tools->txSetPidCoeffI(kpI, kiI, kdI);                             // 0x41 Применить
+    Tools->txSetPidCoeffI(kpI, kiI, kdI);                             // 0x41* Применить
  
     kpV = Tools->readNvsFloat("device", "kpV", MPrj::kp_v_default);
     kiV = Tools->readNvsFloat("device", "kiV", MPrj::ki_v_default);
     kdV = Tools->readNvsFloat("device", "kdV", MPrj::kd_v_default);
-    Tools->txSetPidCoeffV(kpV, kiV, kdV);                             // 0x41 Применить
+    Tools->txSetPidCoeffV(kpV, kiV, kdV);                             // 0x41* Применить
 
       // Инициализация счетчика времени до старта
     Tools->setTimeCounter( Tools->postpone * 36000 );    // Отложенный старт ( * 0.1s в этой версии)
@@ -186,8 +186,8 @@ namespace MCccv
      Здесь задаются сетпойнты по напряжению и току. Подъем тока
      производится ПИД-регулятором.
     */ 
-    Tools->txPidClear();                // 0x44
-    Tools->txPowerAuto(maxV, maxI);     /* 0x20  Команда драйверу запустить ПИД-регулятор
+    Tools->txPidClear();                // 0x44*
+    Tools->txPowerAuto(maxV, maxI);     /* 0x20*  Команда драйверу запустить ПИД-регулятор
                                           в автоматическом режиме */
   }
 
@@ -283,8 +283,8 @@ namespace MCccv
     Tools->clrTimeCounter();      // Обнуляются счетчики времени
 
       // Порог регулирования по минимальному напряжению
-    //Tools->txPowerAuto(minV, maxI);        // 0x20  Команда драйверу
-    Tools->txPowerAuto(minV, minI <<2);        // 0x20  Команда драйверу
+    Tools->txPowerAuto(minV, maxI);        // 0x20*  Команда драйверу
+    //Tools->txPowerAuto(minV, minI <<2);        // 0x20*  Команда драйверу
   }
 
   MState *MKeepVmin::fsm()
@@ -318,7 +318,7 @@ namespace MCccv
       о продолжительности и отданном заряде. */
   MStop::MStop(MTools * Tools) : MState(Tools)
   {
-    Tools->txPowerStop();             // 0x21 Команда драйверу отключить преобразователь
+    Tools->txPowerStop();             // 0x21* Команда драйверу отключить преобразователь
     Display->drawLabel(                 "CCCV", 0);
     Display->drawLabel("The charge is stopped", 1);
     Display->drawLabel(          "Statistics:", 2);

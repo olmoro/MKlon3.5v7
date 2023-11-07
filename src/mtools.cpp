@@ -398,11 +398,11 @@ void MTools::txDischargeGo(short spI)
 //   buffCmd = MCmd::cmd_discurrent_adj;
 // }
 
-  // 0x28
-void MTools::txPowerOn() 
-{
-  buffCmd = MCmd::cmd_power_on;
-}
+//   // 0x28
+// void MTools::txPowerOn() 
+// {
+//   buffCmd = MCmd::cmd_power_on;
+// }
 
 
 
