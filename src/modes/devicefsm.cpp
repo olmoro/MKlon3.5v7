@@ -257,7 +257,7 @@ Serial.print("\nStateI=0b"); Serial.print(Tools->getState(), HEX);
                               case 3: Display->newBtn(MDisplay::GO, MDisplay::NEXT, MDisplay::STOP);
                                       //Tools->txPowerAuto(spV, spI);
                                       //Tools->txPowerVGo(spV, spI);
-                                      Tools->txVoltageAdj(spV);       // 0x25
+    //                                  Tools->txVoltageAdj(spV);       // 0x25
                                       break;
                               case 4: return new MLoadSpV(Tools);
                               case 5: return new MLoadKpV(Tools);

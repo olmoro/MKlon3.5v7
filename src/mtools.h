@@ -183,9 +183,9 @@ class MTools
     //void txDischargeGo(float spI);                          // 0x24
     void txDischargeGo(short spI);                          // 0x24
 
-    void txVoltageAdj(short spV);                           // 0x25 Регулировка напряжения
-    void txCurrentAdj(short spI);                           // 0x26 Регулировка тока заряда
-    void txDiscurrentAdj(short spD);                        // 0x27 Регулировка тока разряда
+//    void txVoltageAdj(short spV);                           // 0x25 Регулировка напряжения
+//    void txCurrentAdj(short spI);                           // 0x26 Регулировка тока заряда
+//    void txDiscurrentAdj(short spD);                        // 0x27 Регулировка тока разряда
     void txPowerOn();                                   // 0x28
 
 

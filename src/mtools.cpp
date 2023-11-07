@@ -374,29 +374,29 @@ void MTools::txDischargeGo(short spI)
 //const uint8_t cmd_voltage_adj               = 0x25; // Регулировка напряжения
 //const uint8_t cmd_current_adj               = 0x26; // Регулировка тока заряда
 //const uint8_t cmd_discurrent_adj            = 0x27; // Регулировка тока разряда
-  // 0x25 Регулировка напряжения (милливольты)
-void MTools::txVoltageAdj(short spV)
-{
-//  pidMode   = MPrj::RU;
-  setpointU = spV;
-  buffCmd = MCmd::cmd_current_adj;
-}
+//   // 0x25 Регулировка напряжения (милливольты)
+// void MTools::txVoltageAdj(short spV)
+// {
+// //  pidMode   = MPrj::RU;
+//   setpointU = spV;
+//   buffCmd = MCmd::cmd_current_adj;
+// }
 
-  // 0x26 Регулировка тока заряда (миллиамперы)
-void MTools::txCurrentAdj(short spI)
-{
-//  pidMode   = MPrj::RI;
-  setpointI = spI;
-  buffCmd = MCmd::cmd_current_adj;
-}
+//   // 0x26 Регулировка тока заряда (миллиамперы)
+// void MTools::txCurrentAdj(short spI)
+// {
+// //  pidMode   = MPrj::RI;
+//   setpointI = spI;
+//   buffCmd = MCmd::cmd_current_adj;
+// }
 
-  // 0x27 Регулировка тока разряда (миллиамперы)
-void MTools::txDiscurrentAdj(short spD)
-{
-//  pidMode   = MPrj::RD;
-  setpointD = abs(spD);
-  buffCmd = MCmd::cmd_discurrent_adj;
-}
+//   // 0x27 Регулировка тока разряда (миллиамперы)
+// void MTools::txDiscurrentAdj(short spD)
+// {
+// //  pidMode   = MPrj::RD;
+//   setpointD = abs(spD);
+//   buffCmd = MCmd::cmd_discurrent_adj;
+// }
 
   // 0x28
 void MTools::txPowerOn() 

@@ -61,9 +61,9 @@ void MCommands::doCommand()
       case MCmd::cmd_power_mode:              doPowerMode();              break;  // 0x22
       case MCmd::cmd_discharge_go:            doDischargeGo();            break;  // 0x24
       // case MCmd::cmd_power_go_mode:           doPowerGoMode();            break;  // 0x25
-      case MCmd::cmd_voltage_adj:             doVoltageAdj();             break;  // 0x25 Регулировка напряжения
-      case MCmd::cmd_current_adj:             doCurrentAdj();             break;  // 0x26 Регулировка тока заряда
-      case MCmd::cmd_discurrent_adj:          doDiscurrentAdj();          break;  // 0x27 Регулировка тока разряда
+//      case MCmd::cmd_voltage_adj:             doVoltageAdj();             break;  // 0x25 Регулировка напряжения
+//      case MCmd::cmd_current_adj:             doCurrentAdj();             break;  // 0x26 Регулировка тока заряда
+//      case MCmd::cmd_discurrent_adj:          doDiscurrentAdj();          break;  // 0x27 Регулировка тока разряда
       case MCmd::cmd_power_on:            doPowerOn();          break;  // 0x28
 
         // Команды работы с измерителем напряжения 
@@ -703,32 +703,32 @@ void MCommands::doDischargeGo()
 
 
 
-//const uint8_t cmd_voltage_adj               = 0x25; // Регулировка напряжения
-// Команда регулировки напряжения             0x25
-void MCommands::doVoltageAdj()
-{
-  int id = 0;
-  id = Wake->replyU16(id, Tools->setpointU);
-  Wake->configAsk( id, MCmd::cmd_voltage_adj);
-}
+// //const uint8_t cmd_voltage_adj               = 0x25; // Регулировка напряжения
+// // Команда регулировки напряжения             0x25
+// void MCommands::doVoltageAdj()
+// {
+//   int id = 0;
+//   id = Wake->replyU16(id, Tools->setpointU);
+//   Wake->configAsk( id, MCmd::cmd_voltage_adj);
+// }
 
 //const uint8_t cmd_current_adj               = 0x26; // Регулировка тока заряда
 // Команда регулировки тока заряда              0x26
-void MCommands::doCurrentAdj()
-{
-  int id = 0;
-  id = Wake->replyU16(id, Tools->setpointI);
-  Wake->configAsk( id, MCmd::cmd_current_adj);
-}
+// void MCommands::doCurrentAdj()
+// {
+//   int id = 0;
+//   id = Wake->replyU16(id, Tools->setpointI);
+//   Wake->configAsk( id, MCmd::cmd_current_adj);
+// }
 
-//const uint8_t cmd_discurrent_adj            = 0x27; // Регулировка тока разряда
-// Команда регулировки тока разряда             0x27
-void MCommands::doDiscurrentAdj()
-{
-  int id = 0;
-  id = Wake->replyU16(id, Tools->setpointD);
-  Wake->configAsk( id, MCmd::cmd_discurrent_adj);
-}
+// //const uint8_t cmd_discurrent_adj            = 0x27; // Регулировка тока разряда
+// // Команда регулировки тока разряда             0x27
+// void MCommands::doDiscurrentAdj()
+// {
+//   int id = 0;
+//   id = Wake->replyU16(id, Tools->setpointD);
+//   Wake->configAsk( id, MCmd::cmd_discurrent_adj);
+// }
 
 // 0x28 cmd_power_on:            
 void MCommands::doPowerOn()
