@@ -369,12 +369,11 @@ BOOT исправление команды 0x3E                   - OK
 RAM:   [=         ]  14.8% (used 48492 bytes from 327680 bytes)
 Flash: [========= ]  94.1% (used 1233106 bytes from 1310720 bytes)
 
-27.10.2023
+06.11.2023
 CCCV подбор перехода от CC к CV
-CC: kp = 0.75   ki = 3.60   kp = 0.0
-CV: kp = 0.73   ki = 1.79   kp = 0.0
+CC: kp = 0.24   ki = 0.12   kp = 0.0
+CV: kp = 0.24   ki = 0.12   kp = 0.0
 smooth: 
-  smooth_v_default = 1u                 - OK
-  smooth_1_default = 1u                 - OK
+  smooth_v_default = 2u                 - OK
+  smooth_1_default = 2u                 - OK
 
-cccvfsm.zip:         https://disk.yandex.ru/d/FSk-rRDVhoaWLA 
