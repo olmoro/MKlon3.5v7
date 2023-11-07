@@ -311,7 +311,7 @@ class MTools
 
     // ============= Согласованные параметры обмена 20230217 =============
       // По умолчанию
-    static constexpr unsigned short param_shift = 9U;
+    static constexpr unsigned short param_shift = 8;  //9U; c20231107   =8
     static constexpr unsigned short param_bits  = 16U;
     static constexpr unsigned short param_max   = (((0x1ULL << param_bits)-1) >> param_shift);
     static constexpr unsigned short param_mult  = (((0x1ULL << param_bits)) >> (param_bits - param_shift));

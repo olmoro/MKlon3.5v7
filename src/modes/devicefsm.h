@@ -165,7 +165,7 @@ namespace MDevice
       MLoadKpV(MTools * Tools);
       MState * fsm() override;
     private:
-      static constexpr float up = 0.24f;    //1.00f;
+      static constexpr float up = 0.99f;    //1.00f;
       static constexpr float dn = 0.01f; 
   };
 
@@ -176,7 +176,7 @@ namespace MDevice
       MLoadKiV(MTools * Tools);
       MState * fsm() override;
     private:
-      static constexpr float up = 0.24f;    //4.00f;
+      static constexpr float up = 0.99f;    //4.00f;
       static constexpr float dn = 0.00f;
   };
 
@@ -187,7 +187,7 @@ namespace MDevice
       MLoadKdV(MTools * Tools);
       MState * fsm() override;
     private:
-      static constexpr float up = 0.24f;    //1.00f;
+      static constexpr float up = 0.99f;    //1.00f;
       static constexpr float dn = 0.00f;
   };
 
@@ -216,7 +216,7 @@ namespace MDevice
       MLoadKpI(MTools * Tools);
       MState * fsm() override;
     private:
-      static constexpr float up = 0.24f;    //2.00f;
+      static constexpr float up = 0.99f;    //2.00f;
       static constexpr float dn = 0.01f; 
   };
 
@@ -227,7 +227,7 @@ namespace MDevice
       MLoadKiI(MTools * Tools);
       MState * fsm() override;
     private:
-      static constexpr float up = 0.24f;    //4.00f;
+      static constexpr float up = 0.99f;    //4.00f;
       static constexpr float dn = 0.00f;
   };
 
@@ -238,7 +238,7 @@ namespace MDevice
       MLoadKdI(MTools * Tools);
       MState * fsm() override;
     private:
-      static constexpr float up = 0.24f;    //1.00f;
+      static constexpr float up = 0.99f;    //1.00f;
       static constexpr float dn = 0.00f;
   };
 
@@ -271,7 +271,7 @@ namespace MDevice
       MLoadKpD(MTools * Tools);
       MState * fsm() override;
     private:
-      static constexpr float up     = 0.2f;  //    1.00f;
+      static constexpr float up     = 0.99f;  //    1.00f;
       static constexpr float dn     = 0.01f; 
       static constexpr float delta  = 0.01f;
   };
@@ -283,7 +283,7 @@ namespace MDevice
       MLoadKiD(MTools * Tools);
       MState * fsm() override;
     private:
-      static constexpr float up = 2.00f;
+      static constexpr float up = 0.99f;
       static constexpr float dn = 0.00f;
   };
 
@@ -294,7 +294,7 @@ namespace MDevice
       MLoadKdD(MTools * Tools);
       MState * fsm() override;
     private:
-      static constexpr float up = 1.00f;
+      static constexpr float up = 0.99f;
       static constexpr float dn = 0.00f;
   };
 

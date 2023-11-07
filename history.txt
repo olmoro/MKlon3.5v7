@@ -377,3 +377,9 @@ smooth:
   smooth_v_default = 2u                 - OK
   smooth_1_default = 2u                 - OK
 
+07.11.2023
+param_shift = 8; было 9  
+Коэфф ПИД 0.99 max 
+CC: kp = 0.50   ki = 0.50   kp = 0.00     - OK
+CV: kp = 0.50   ki = 0.50   kp = 0.00     - OK
+CD: kp = 0.55   ki = 0.50   kp = 0.05     - OK

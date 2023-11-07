@@ -433,9 +433,11 @@ void MTools::txSetShiftI(short val)  {shiftI  = val;   buffCmd = MCmd::cmd_write
 void MTools::txSetPidConfig(uint8_t _m, float _kp, float _ki, float _kd, uint16_t _minOut, uint16_t _maxOut)
 {
   pidMode = _m;
-  kp      = (unsigned short) (_kp * pMult);
-  ki      = (unsigned short)((_ki * pMult) / pidHz);
-  kd      = (unsigned short)((_kd * pMult) * pidHz);
+  kp      = (unsigned short)(_kp * pMult);
+  //ki      = (unsigned short)((_ki * pMult) / pidHz);
+  ki      = (unsigned short)(_ki * pMult);
+  //kd      = (unsigned short)((_kd * pMult) * pidHz);
+  kd      = (unsigned short)(_kd * pMult);
   minOut  = _minOut;
   maxOut  = _maxOut;
   buffCmd = MCmd::cmd_pid_configure;                                                                 // 0x40 Запись
@@ -444,9 +446,11 @@ void MTools::txSetPidConfig(uint8_t _m, float _kp, float _ki, float _kd, uint16_
 void MTools::txSetPidCoeff(unsigned short m, float _kp, float _ki, float _kd)    // 0x41 Запись
 {
     pidMode = m;
-    kp      = (unsigned short) (_kp * pMult);
-    ki      = (unsigned short)((_ki * pMult) / pidHz);
-    kd      = (unsigned short)((_kd * pMult) * pidHz);
+    kp      = (unsigned short)(_kp * pMult);
+    //ki      = (unsigned short)((_ki * pMult) / pidHz);
+    ki      = (unsigned short)(_ki * pMult);
+    //kd      = (unsigned short)((_kd * pMult) * pidHz);
+    kd      = (unsigned short)(_kd * pMult);
     buffCmd = MCmd::cmd_pid_write_coefficients;                                                      // 0x41 Запись
 }
 
@@ -504,9 +508,11 @@ void MTools::txSetPidOutputRange(uint8_t _m, uint16_t _minOut, uint16_t _maxOut)
 void MTools::txSetPidReconfig(uint8_t _m, float _kp, float _ki, float _kd, uint16_t _minOut, uint16_t _maxOut)
 {
     pidMode = _m;
-    kp      = (unsigned short) (_kp * pMult);
-    ki      = (unsigned short)((_ki * pMult) / pidHz);
-    kd      = (unsigned short)((_kd * pMult) * pidHz);
+    kp      = (unsigned short)(_kp * pMult);
+    //ki      = (unsigned short)((_ki * pMult) / pidHz);
+    ki      = (unsigned short)(_ki * pMult);
+    //kd      = (unsigned short)((_kd * pMult) * pidHz);
+    kd      = (unsigned short)(_kd * pMult);
     minOut  = _minOut;
     maxOut  = _maxOut;
     buffCmd = MCmd::cmd_pid_reconfigure;                                                              // 0x43 Запись

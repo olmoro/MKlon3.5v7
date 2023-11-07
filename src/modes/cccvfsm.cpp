@@ -74,6 +74,10 @@ namespace MCccv
     minI       = Tools->readNvsShort("options", "minI", MPrj::min_i_fixed);  // Test 550
     timeOut    = 1;  //Tools->readNvsShort("options", "timeout",  MPrj::timeout_fixed);   // Test
 
+//  Serial.print("\nmaxI="); Serial.print(maxI);  
+
+
+
     /* Вывод в главное окно построчно (26 знакомест):
                               текст    номер строки  параметр (для float число знаков после запятой) */ 
     Display->drawLabel(  "CCCV loaded:",   0);

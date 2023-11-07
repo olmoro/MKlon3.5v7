@@ -20,13 +20,13 @@ namespace MPrj
   // Согласованные параметры ПИД-регуляторов SAMD21 (частный случай):
   static constexpr short pid_frequency_default  = 3u; // 100Hz ([10, 20, 50, 100, 200, 250])
   
-  static constexpr float kp_v_default = 1.00f;   //0.56f;
-  static constexpr float ki_v_default = 1.80f;   //1.79f;
-  static constexpr float kd_v_default = 0.01f;  //0.09f;
+  static constexpr float kp_v_default = 0.48f;  //1.00f;   //0.56f;
+  static constexpr float ki_v_default = 0.48f;  //1.80f;   //1.79f;
+  static constexpr float kd_v_default = 0.00f;  //0.01f;  //0.09f;
   
-  static constexpr float kp_i_default = 1.00f;   //0.56f;
-  static constexpr float ki_i_default = 3.60f;   //1.79f;
-  static constexpr float kd_i_default = 0.00f;   //0.09f;
+  static constexpr float kp_i_default = 0.48f;  //1.00f;   //0.56f;
+  static constexpr float ki_i_default = 0.48f;  //3.60f;   //1.79f;
+  static constexpr float kd_i_default = 0.00f;  //0.00f;   //0.09f;
   
   static constexpr float kp_d_default = 0.70f;   //
   static constexpr float ki_d_default = 0.20f;   //
