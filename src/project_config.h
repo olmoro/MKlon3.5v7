@@ -10,14 +10,18 @@ namespace MPrj
     // Приборные ограничения:
 
   // Согласованные параметры измерителей SAMD21:
-  static constexpr short factor_v_default = 0x5326u;
-  static constexpr short factor_i_default = 0x7918u;
-  static constexpr short smooth_v_default = 1u;
-  static constexpr short smooth_i_default = 1u;
-  static constexpr short shift_v_default  = 0;
-  static constexpr short shift_i_default  = 0;
+  static constexpr unsigned short factor_v_default = 0x5326u;
+  static constexpr unsigned short factor_i_default = 0x7918u;
+  static constexpr unsigned short smooth_v_default = 1u;
+  static constexpr unsigned short smooth_i_default = 1u;
+  static constexpr short shift_v_default           = 0;
+  static constexpr short shift_i_default           = 0;
   
   // Согласованные параметры ПИД-регуляторов SAMD21 (частный случай):
+  static constexpr unsigned short par_mult         = 0x0100;     // pMult
+  static constexpr unsigned short par_max          = 0x00FF;     // pMax
+  static constexpr float par_float_max             = (float)par_max / (float)par_mult;
+  static constexpr short f_hz[6]{ 10, 20, 50, 100, 200, 250 };
   static constexpr short pid_frequency_default  = 3u; // 100Hz ([10, 20, 50, 100, 200, 250])
   
   static constexpr float kp_v_default = 0.48f;  //1.00f;   //0.56f;

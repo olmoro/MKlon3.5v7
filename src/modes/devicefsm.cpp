@@ -272,12 +272,115 @@ Serial.print("\nStateI=0b"); Serial.print(Tools->getState(), HEX);
       default:;
     }
 
-    Serial.print("\nStateV=0x"); Serial.print(Tools->getState(), HEX);
+//    Serial.print("\nStateV=0x"); Serial.print(Tools->getState(), HEX);
 
     (Tools->getState() == Tools->getStatusPidVoltage()) ? 
                                      Board->ledsGreen() : Board->ledsRed();
     return this;
   };  //MAdjPidV
+
+
+
+  //========================================================================= MAdjPidD
+  //  
+  MAdjPidD::MAdjPidD(MTools *Tools) : MState(Tools)
+  {
+    // Восстановление пользовательских sp, kp, ki, kp
+    spD  = Tools->readNvsShort("device", "spD", sp_d_default);
+    kpD = Tools->readNvsFloat("device", "kpD", MPrj::kp_d_default);
+    kiD = Tools->readNvsFloat("device", "kiD", MPrj::ki_d_default);
+    kdD = Tools->readNvsFloat("device", "kdD", MPrj::kd_d_default);
+    mark = 3;
+    Display->drawLabel(           "DEVICE", 0);
+    Display->drawLabel( "Adjusting PID_D:", 1);
+    Display->clearLine(                     2);
+    Display->drawParFl(    "Setpoint, A :", 3, spD,  2, mark);
+    Display->drawParam(             "Kp :", 4, kpD, 2, mark);
+    Display->drawParam(             "Ki :", 5, kiD, 2, mark);
+    Display->drawParam(             "Kd :", 6, kdD, 2, mark);
+    Display->clearLine(                     7);
+  //  Board->ledsCyan();
+    Display->newBtn(MDisplay::GO, MDisplay::NEXT, MDisplay::BACK);
+  }
+  MState *MAdjPidD::fsm()
+  {
+    switch ( Display->getKey() )
+    {
+      case MDisplay::NEXT:    (mark >= 6) ? mark = 3 : mark++;
+                              Display->drawParFl("setpoint, A :", 3,  spD, 2, mark);
+                              Display->drawParam(         "Kp :", 4, kpD, 2, mark);
+                              Display->drawParam(         "Ki :", 5, kiD, 2, mark);
+                              Display->drawParam(         "Kd :", 6, kdD, 2, mark);
+                              break;
+      case MDisplay::GO:      switch (mark)
+                              {
+                                case 3:  return new MLoadSp(Tools);
+                                case 4:  return new MLoadKpD(Tools);
+                                case 5:  return new MLoadKiD(Tools);
+                                case 6:  return new MLoadKdD(Tools);
+                                default:;
+                              }
+      case MDisplay::BACK:    Tools->txPowerStop();
+                              return new MStart(Tools);
+      default:;
+    }
+    (Tools->getState() == Tools->getStatusPidDiscurrent()) ? 
+                                        Board->ledsGreen() : Board->ledsRed();
+    return this;
+  };
+
+
+
+  //========================================================================= MPidFrequency
+  // Состояние: "Коррекция частоты ПИД-регулятора".
+  MPidFrequency::MPidFrequency(MTools *Tools) : MState(Tools)
+  {
+    i = Tools->readNvsShort("device", "freq", MPrj::pid_frequency_default);
+    if (i <= dn) i = dn;
+    if (i >= up) i = up;
+#ifdef PRINTDEVICE
+    Serial.print("\nNVS_freq=0x");
+    Serial.print(i, HEX);
+#endif
+    // В главное окно выводятся:
+    Display->drawLabel(                  "DEVICE", 0);
+    Display->drawLabel("Adjusting PID Frequency:", 1);
+    Display->clearLine(                            2);
+    Display->drawShort(             "Frequency :", 3, MPrj::f_hz[i]);
+    Display->clearLine(                            4, 7);
+
+    mark = 3;
+    Board->ledsBlue();
+
+    Display->newBtn(MDisplay::SAVE, MDisplay::UP, MDisplay::DN);
+  }
+  MState *MPidFrequency::fsm()
+  {
+    switch (Display->getKey())
+    {
+      case MDisplay::SAVE:  Tools->writeNvsShort("device", "freq", i);
+                            Tools->txSetPidFrequency(MPrj::f_hz[i]);          // 0x4A Применить
+                            return new MStart(Tools);
+      case MDisplay::UP:    i = Tools->updnInt(i, dn, up, +1);
+                            Display->drawLabel("PID Frequency changed:", 1);
+                            Display->drawShort("Frequency :", 3, MPrj::f_hz[i], mark); 
+                            Tools->txSetPidFrequency(MPrj::f_hz[i]);        // 0x4A Применить
+                            break;
+      case MDisplay::DN:    i = Tools->updnInt(i, dn, up, -1);
+                            Display->drawLabel("PID Frequency changed:", 1);
+                            Display->drawShort(       "Frequency, Hz :", 3, MPrj::f_hz[i], mark);
+                            Tools->txSetPidFrequency(MPrj::f_hz[i]);        // 0x4A Применить
+                            break;
+      default:;
+    }
+    Tools->showVolt(Tools->getRealVoltage(), 3);
+    Tools->showAmp(Tools->getRealCurrent(), 3);
+
+    return this;
+  }; // MPidFrequency
+
+
+
 
 
 
@@ -422,7 +525,7 @@ Serial.print("\nStateI=0b"); Serial.print(Tools->getState(), HEX);
       case MDisplay::UP:    smooth = Tools->updnInt(smooth, dn, up, +1);
                             Display->drawLabel("Voltage smooth changed:", 1);
                             Display->drawShort("Smooth :", 3, smooth, mark);
-                            Tools->txSetFactorU(smooth);                       // 0x34 Применить
+                            Tools->txSetSmoothU(smooth);                       // 0x34 Применить
                             break;
       case MDisplay::DN:    smooth = Tools->updnInt(smooth, dn, up, -1);
                             Display->drawLabel("Voltage smooth changed:", 1);
@@ -875,53 +978,6 @@ Serial.print("\nStateI=0b"); Serial.print(Tools->getState(), HEX);
 
 
 
-  //========================================================================= MAdjPidD
-  //  
-  MAdjPidD::MAdjPidD(MTools *Tools) : MState(Tools)
-  {
-    // Восстановление пользовательских sp, kp, ki, kp
-    spD  = Tools->readNvsShort("device", "spD", sp_d_default);
-    kpD = Tools->readNvsFloat("device", "kpD", MPrj::kp_d_default);
-    kiD = Tools->readNvsFloat("device", "kiD", MPrj::ki_d_default);
-    kdD = Tools->readNvsFloat("device", "kdD", MPrj::kd_d_default);
-    mark = 3;
-    Display->drawLabel(           "DEVICE", 0);
-    Display->drawLabel( "Adjusting PID_D:", 1);
-    Display->clearLine(                     2);
-    Display->drawParFl(    "Setpoint, A :", 3, spD,  2, mark);
-    Display->drawParam(             "Kp :", 4, kpD, 2, mark);
-    Display->drawParam(             "Ki :", 5, kiD, 2, mark);
-    Display->drawParam(             "Kd :", 6, kdD, 2, mark);
-    Display->clearLine(                     7);
-  //  Board->ledsCyan();
-    Display->newBtn(MDisplay::GO, MDisplay::NEXT, MDisplay::BACK);
-  }
-  MState *MAdjPidD::fsm()
-  {
-    switch ( Display->getKey() )
-    {
-      case MDisplay::NEXT:    (mark >= 6) ? mark = 3 : mark++;
-                              Display->drawParFl("setpoint, A :", 3,  spD, 2, mark);
-                              Display->drawParam(         "Kp :", 4, kpD, 2, mark);
-                              Display->drawParam(         "Ki :", 5, kiD, 2, mark);
-                              Display->drawParam(         "Kd :", 6, kdD, 2, mark);
-                              break;
-      case MDisplay::GO:      switch (mark)
-                              {
-                                case 3:  return new MLoadSp(Tools);
-                                case 4:  return new MLoadKpD(Tools);
-                                case 5:  return new MLoadKiD(Tools);
-                                case 6:  return new MLoadKdD(Tools);
-                                default:;
-                              }
-      case MDisplay::BACK:    Tools->txPowerStop();
-                              return new MStart(Tools);
-      default:;
-    }
-    (Tools->getState() == Tools->getStatusPidDiscurrent()) ? 
-                                        Board->ledsGreen() : Board->ledsRed();
-    return this;
-  };
 
 
 //========== MLoadSp, ввод порога PID-регулятора ========================= 
@@ -1077,56 +1133,6 @@ Serial.print("\nStateI=0b"); Serial.print(Tools->getState(), HEX);
   };
 
 
-  //========================================================================= MPidFrequency
-  // Состояние: "Коррекция частоты ПИД-регулятора".
-  MPidFrequency::MPidFrequency(MTools *Tools) : MState(Tools)
-  {
-    i = Tools->readNvsShort("device", "freq", fixed);
-    if (i <= dn) i = dn;
-    if (i >= up) i = up;
-#ifdef PRINTDEVICE
-    Serial.print("\nNVS_freq=0x");
-    Serial.print(i, HEX);
-#endif
-    // В главное окно выводятся:
-    Display->drawLabel(                  "DEVICE", 0);
-    Display->drawLabel("Adjusting PID Frequency:", 1);
-    Display->clearLine(                            2);
-    Display->drawShort(             "Frequency :", 3, freq[i]);
-    Display->clearLine(                            4, 7);
-
-    mark = 3;
-    Board->ledsBlue();
-
-    Display->newBtn(MDisplay::SAVE, MDisplay::UP, MDisplay::DN);
-  }
-  MState *MPidFrequency::fsm()
-  {
-    switch (Display->getKey())
-    {
-      case MDisplay::SAVE:  Tools->writeNvsShort("device", "freq", i);
-                            Tools->txSetPidFrequency(freq[i]);          // 0x4A Применить
-                            return new MStart(Tools);
-      case MDisplay::UP:    i = Tools->updnInt(i, dn, up, +1);
-                            Display->drawLabel("DEVICE", 0);
-                            Display->drawLabel("PID Frequency changed:", 1);
-                            Display->drawShort("Frequency :", 3, freq[i], mark); 
-                            // Белым - когда значение изменено
-                            Tools->txSetPidFrequency(freq[i]);           // 0x4A Применить
-                            break;
-      case MDisplay::DN:    i = Tools->updnInt(i, dn, up, -1);
-  //                        Display->drawLabel(                "DEVICE", 0);
-                            Display->drawLabel("PID Frequency changed:", 1);
-                            Display->drawShort(       "Frequency, Hz :", 3, freq[i], mark);
-                            Tools->txSetPidFrequency(freq[i]); // 0x4A Применить
-                            break;
-      default:;
-    }
-    Tools->showVolt(Tools->getRealVoltage(), 3);
-    Tools->showAmp(Tools->getRealCurrent(), 3);
-
-    return this;
-  }; // MPidFrequency
 
   //========================================================================= MStop
   // Состояние: "Завершение режима DEVICE",

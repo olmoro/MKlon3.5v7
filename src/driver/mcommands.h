@@ -50,9 +50,6 @@ class MCommands
     void doPowerMode();                 // 0x22
     void doDischargeGo();               // 0x24  
 
-//    void doVoltageAdj();                // 0x25 Регулировка напряжения
-//    void doCurrentAdj();                // 0x26 Регулировка тока заряда
-//    void doDiscurrentAdj();             // 0x27 Регулировка тока разряда 
     void doPowerOn();               // 0x28
 
         // Команды работы с измерителем напряжения 

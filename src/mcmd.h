@@ -2,7 +2,7 @@
 #define _MCMD_H_
 /*
   Коды команд обмена с драйвером силовой платы
-  2023 январь
+  2023 ноябрь
 */
 
 #include "stdint.h"
@@ -24,9 +24,7 @@ namespace MCmd
 
   constexpr uint8_t cmd_discharge_go              = 0x24; // старт разряда с отключением преобразователя
 
-//  constexpr uint8_t cmd_voltage_adj               = 0x25; // Регулировка напряжения
-//  constexpr uint8_t cmd_current_adj               = 0x26; // Регулировка тока заряда
-//  constexpr uint8_t cmd_discurrent_adj            = 0x27; // Регулировка тока разряда
+
 //  constexpr uint8_t cmd_power_on            = 0x28; // 
 
 
@@ -64,9 +62,7 @@ namespace MCmd
   constexpr uint8_t cmd_pid_test                  = 0x46; // mode, setpoint, sw
   constexpr uint8_t cmd_pid_read_treaty           = 0x47; // get shift, bits, hz 
   constexpr uint8_t cmd_pid_read_configure        = 0x48; // mode, kP, kI, kD, min, max - возвращает параметры текущего режима регулирования
-    //    constexpr uint8_t cmd_pid_write_max_sum         = 0x49; // Задает максимальный интеграл при вычислении шага рег
-  //constexpr uint8_t cmd_pid_up_current            = 0x4A; // Для фазы подъема тока - резерв
-  //constexpr uint8_t cmd_set_cooler                = 0x4F; // Задать скорость вентилятора
+  //constexpr uint8_t cmd_pid_write_max_sum         = 0x49; // Задает максимальный интеграл при вычислении шага рег
   //constexpr uint8_t cmd_pid_write_treaty          = 0x4A; // set shift, bits, hz  (резерв)
   constexpr uint8_t cmd_pid_write_frequency       = 0x4A; //Запись частоты pid-регулятора
   

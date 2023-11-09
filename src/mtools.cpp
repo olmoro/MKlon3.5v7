@@ -282,8 +282,6 @@ uint8_t buffCmd = MCmd::cmd_nop;             // 0x00 - нет операции
 uint8_t MTools::getBuffCmd()            {return buffCmd;}
 void    MTools::setBuffCmd(uint8_t cmd) {buffCmd = cmd;}
 
-unsigned short MTools::getParamMult() {return pMult;}
-void  MTools::setParamMult(unsigned short _pm) {pMult = _pm;}
 
 short MTools::getCooler() {return cool;}
 void  MTools::setCooler(short val) {cool = val;}
@@ -316,13 +314,7 @@ void MTools::txGetUI()              {buffCmd = MCmd::cmd_get_ui;}       // 0x13 
 void MTools::txGetState()           {buffCmd = MCmd::cmd_get_state;}    // 0x14 Чтение состояния
 void MTools::txReady()              {buffCmd = MCmd::cmd_ready;}  // 0x15 Параметры согласованы
 
-  // Команда управления PID-регулятором заряда    0x20
-// void MTools::txPowerAuto(float spV, float spI)
-// {
-//   setpointU = (short)(spV * 1000);
-//   setpointI = (short)(spI * 1000);
-//   buffCmd   = MCmd::cmd_power_auto;
-// } 
+
 void MTools::txPowerAuto(short spV, short spI)
 {
   setpointU = spV;
@@ -338,14 +330,7 @@ void MTools::txPowerStop()
   vTaskDelay(80 / portTICK_PERIOD_MS);
 }
 
-  // Команда управления PID-регулятором с выбором режима                 // 0x22
-// void MTools::txPowerMode(float spV, float spI, uint8_t mode)
-// {
-//   setpointU = (short)(spV * 1000);
-//   setpointI = (short)(spI * 1000);
-//   pidMode   = mode;                   // Выбор режима старта
-//   buffCmd   = MCmd::cmd_power_mode;
-// }
+
 void MTools::txPowerMode(short spV, short spI, uint8_t mode)
 {
   setpointU = spV;
@@ -358,12 +343,6 @@ void MTools::txPowerVGo(short spV, short spI) {txPowerMode(spV, spI, MPrj::RU);}
 
 void MTools::txPowerIGo(short spV, short spI) {txPowerMode(spV, spI, MPrj::RI);}   // 0x22
 
-  // Команда управления pid-регулятором разряда                                                        // 0x24
-// void MTools::txDischargeGo(float spI)
-// {
-//   setpointI = (short)(spI * 1000);
-//   buffCmd = MCmd::cmd_discharge_go;
-// }                       
 void MTools::txDischargeGo(short spI)
 {
   setpointI = spI;
@@ -371,32 +350,6 @@ void MTools::txDischargeGo(short spI)
 }                       
 
 
-//const uint8_t cmd_voltage_adj               = 0x25; // Регулировка напряжения
-//const uint8_t cmd_current_adj               = 0x26; // Регулировка тока заряда
-//const uint8_t cmd_discurrent_adj            = 0x27; // Регулировка тока разряда
-//   // 0x25 Регулировка напряжения (милливольты)
-// void MTools::txVoltageAdj(short spV)
-// {
-// //  pidMode   = MPrj::RU;
-//   setpointU = spV;
-//   buffCmd = MCmd::cmd_current_adj;
-// }
-
-//   // 0x26 Регулировка тока заряда (миллиамперы)
-// void MTools::txCurrentAdj(short spI)
-// {
-// //  pidMode   = MPrj::RI;
-//   setpointI = spI;
-//   buffCmd = MCmd::cmd_current_adj;
-// }
-
-//   // 0x27 Регулировка тока разряда (миллиамперы)
-// void MTools::txDiscurrentAdj(short spD)
-// {
-// //  pidMode   = MPrj::RD;
-//   setpointD = abs(spD);
-//   buffCmd = MCmd::cmd_discurrent_adj;
-// }
 
 //   // 0x28
 // void MTools::txPowerOn() 
@@ -433,11 +386,9 @@ void MTools::txSetShiftI(short val)  {shiftI  = val;   buffCmd = MCmd::cmd_write
 void MTools::txSetPidConfig(uint8_t _m, float _kp, float _ki, float _kd, uint16_t _minOut, uint16_t _maxOut)
 {
   pidMode = _m;
-  kp      = (unsigned short)(_kp * pMult);
-  //ki      = (unsigned short)((_ki * pMult) / pidHz);
-  ki      = (unsigned short)(_ki * pMult);
-  //kd      = (unsigned short)((_kd * pMult) * pidHz);
-  kd      = (unsigned short)(_kd * pMult);
+  kp      = (unsigned short)(_kp * MPrj::par_mult);
+  ki      = (unsigned short)(_ki * MPrj::par_mult);
+  kd      = (unsigned short)(_kd * MPrj::par_mult);
   minOut  = _minOut;
   maxOut  = _maxOut;
   buffCmd = MCmd::cmd_pid_configure;                                                                 // 0x40 Запись
@@ -446,11 +397,9 @@ void MTools::txSetPidConfig(uint8_t _m, float _kp, float _ki, float _kd, uint16_
 void MTools::txSetPidCoeff(unsigned short m, float _kp, float _ki, float _kd)    // 0x41 Запись
 {
     pidMode = m;
-    kp      = (unsigned short)(_kp * pMult);
-    //ki      = (unsigned short)((_ki * pMult) / pidHz);
-    ki      = (unsigned short)(_ki * pMult);
-    //kd      = (unsigned short)((_kd * pMult) * pidHz);
-    kd      = (unsigned short)(_kd * pMult);
+    kp      = (unsigned short)(_kp * MPrj::par_mult);
+    ki      = (unsigned short)(_ki * MPrj::par_mult);
+    kd      = (unsigned short)(_kd * MPrj::par_mult);
     buffCmd = MCmd::cmd_pid_write_coefficients;                                                      // 0x41 Запись
 }
 
@@ -458,9 +407,9 @@ void MTools::txSetPidCoeff(unsigned short m, float _kp, float _ki, float _kd)   
 void MTools::txSetPidCoeffV(float _kp, float _ki, float _kd)
 {
   pidMode = MPrj::RU; //      1;
-  kp      = (unsigned short) (_kp * pMult);
-  ki      = (unsigned short) (_ki * pMult);
-  kd      = (unsigned short) (_kd * pMult);
+  kp      = (unsigned short) (_kp * MPrj::par_mult);
+  ki      = (unsigned short) (_ki * MPrj::par_mult);
+  kd      = (unsigned short) (_kd * MPrj::par_mult);
   buffCmd = MCmd::cmd_pid_write_coefficients;
   vTaskDelay(80 / portTICK_PERIOD_MS);
 }
@@ -469,14 +418,14 @@ void MTools::txSetPidCoeffV(float _kp, float _ki, float _kd)
 void MTools::txSetPidCoeffI(float _kp, float _ki, float _kd)
 {
   pidMode = MPrj::RI;   //2;
-  kp      = (unsigned short) (_kp * pMult);
+  kp      = (unsigned short) (_kp * MPrj::par_mult);
     
 //  Serial.print("\n_kp="); Serial.print(_kp, 2);
 //  Serial.print("\npMult=0x"); Serial.print(pMult, HEX);
 //  Serial.print("\nkp=0x"); Serial.print(kp, HEX);
 
-  ki      = (unsigned short) (_ki * pMult);
-  kd      = (unsigned short) (_kd * pMult);
+  ki      = (unsigned short) (_ki * MPrj::par_mult);
+  kd      = (unsigned short) (_kd * MPrj::par_mult);
   buffCmd = MCmd::cmd_pid_write_coefficients; 
   vTaskDelay(80 / portTICK_PERIOD_MS);
 }
@@ -484,9 +433,9 @@ void MTools::txSetPidCoeffI(float _kp, float _ki, float _kd)
 void MTools::txSetPidCoeffD(float _kp, float _ki, float _kd)
 {
   pidMode = MPrj::RD;   //3;
-  kp      = (unsigned short) (_kp * pMult);
-  ki      = (unsigned short) (_ki * pMult);
-  kd      = (unsigned short) (_kd * pMult);
+  kp      = (unsigned short) (_kp * MPrj::par_mult);
+  ki      = (unsigned short) (_ki * MPrj::par_mult);
+  kd      = (unsigned short) (_kd * MPrj::par_mult);
   buffCmd = MCmd::cmd_pid_write_coefficients;   // 0x41 Запись
   vTaskDelay(80 / portTICK_PERIOD_MS);
 
@@ -508,11 +457,9 @@ void MTools::txSetPidOutputRange(uint8_t _m, uint16_t _minOut, uint16_t _maxOut)
 void MTools::txSetPidReconfig(uint8_t _m, float _kp, float _ki, float _kd, uint16_t _minOut, uint16_t _maxOut)
 {
     pidMode = _m;
-    kp      = (unsigned short)(_kp * pMult);
-    //ki      = (unsigned short)((_ki * pMult) / pidHz);
-    ki      = (unsigned short)(_ki * pMult);
-    //kd      = (unsigned short)((_kd * pMult) * pidHz);
-    kd      = (unsigned short)(_kd * pMult);
+    kp      = (unsigned short)(_kp * MPrj::par_mult);
+    ki      = (unsigned short)(_ki * MPrj::par_mult);
+    kd      = (unsigned short)(_kd * MPrj::par_mult);
     minOut  = _minOut;
     maxOut  = _maxOut;
     buffCmd = MCmd::cmd_pid_reconfigure;                                                              // 0x43 Запись
@@ -622,17 +569,6 @@ float MTools::updnFloat(float value, float below, float above, float additives)
     return value;
 }
 
-// Расчет множителя
-unsigned short MTools::calkPMult(unsigned short shift, unsigned short bits)
-{
-  return (((0x1ULL << bits)) >> (bits - shift));
-}
-
-// Расчет максимума
-unsigned short MTools::calkPMax(unsigned short shift, unsigned short bits)
-{
-  return (((0x1ULL << bits)-1) >> shift);
-}
 
 // Расчет частоты (резерв)
 unsigned short MTools::calkPHz(unsigned short pidHz)
@@ -640,8 +576,7 @@ unsigned short MTools::calkPHz(unsigned short pidHz)
   return pidHz;
 }
 
-unsigned short MTools::getPMult() {return pMult;}
-unsigned short MTools::getPMax()  {return pMax;}
+
 unsigned short MTools::getPHz()   {return pidHz;}
 
 

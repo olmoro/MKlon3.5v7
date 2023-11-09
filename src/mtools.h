@@ -109,8 +109,6 @@ class MTools
     float getRealVoltage(); //+m
     float getRealCurrent(); //+m
 
-   unsigned short getParamMult();
-   void  setParamMult(unsigned short pm);
 
     unsigned short postpone = 0;      // Заданная задержка включения (отложенный старт), ч
     void  setPostpone(unsigned short hour);
@@ -173,19 +171,13 @@ class MTools
     void txReady();                                         // 0x15 Параметры согласованы
       
       // Команды stop/go
-    //void txPowerAuto(float spV, float spI);                 // 0x20
     void txPowerAuto(short spV, short spI);                 // 0x20
     void txPowerStop();                                     // 0x21
-    //void txPowerMode(float spV, float spI, uint8_t mode);   // 0x22
     void txPowerMode(short spV, short spI, uint8_t mode);   // 0x22
     void txPowerVGo(short spV, short spI);                            // 0x22
     void txPowerIGo(short spV, short spI);                            // 0x22
-    //void txDischargeGo(float spI);                          // 0x24
     void txDischargeGo(short spI);                          // 0x24
 
-//    void txVoltageAdj(short spV);                           // 0x25 Регулировка напряжения
-//    void txCurrentAdj(short spI);                           // 0x26 Регулировка тока заряда
-//    void txDiscurrentAdj(short spD);                        // 0x27 Регулировка тока разряда
 //    void txPowerOn();                                   // 0x28
 
 
@@ -311,28 +303,22 @@ class MTools
 
     // ============= Согласованные параметры обмена 20230217 =============
       // По умолчанию
-    static constexpr unsigned short param_shift = 8;  //9U; c20231107   =8
-    static constexpr unsigned short param_bits  = 16U;
-    static constexpr unsigned short param_max   = (((0x1ULL << param_bits)-1) >> param_shift);
-    static constexpr unsigned short param_mult  = (((0x1ULL << param_bits)) >> (param_bits - param_shift));
+    // static constexpr unsigned short param_shift = 8;  //9U; c20231107   =8
+    // static constexpr unsigned short param_bits  = 16U;
+    // static constexpr unsigned short param_max   = (((0x1ULL << param_bits)-1) >> param_shift);
+    // static constexpr unsigned short param_mult  = (((0x1ULL << param_bits)) >> (param_bits - param_shift));
     static constexpr unsigned short param_hz    = 100U;
     // Из данных, полученных от драйвера, начальные - по умолчанию
-    unsigned short pMult = param_mult;      //_max;
-    unsigned short pMax  = param_max;
+//    unsigned short pMult = param_mult;      //_max;
+//    unsigned short pMax  = param_max;
   //  static constexpr float fparh = (float)(param_max / param_mult);
     //unsigned short pHz   = param_hz;
     //unsigned short pidHz   = param_hz;
     short pidHz   = param_hz;
     
-    // Расчет множителя
-    unsigned short calkPMult(unsigned short shift, unsigned short bits);
-    // Расчет максимума
-    unsigned short calkPMax(unsigned short shift, unsigned short bits);
-    // 
     unsigned short calkPHz(unsigned short hz);
 
-    unsigned short getPMult();
-    unsigned short getPMax();
+  
     unsigned short getPHz();
 
   // ============= Регистр состояния драйвера =============
@@ -393,8 +379,8 @@ class MTools
     // Согласовать с драйвером
     static constexpr short lt_default_v  =  -200;   // при переполюсовке
     static constexpr short up_default_v  = 19500;   // исполняется конструктивно
-    static constexpr short lt_default_i  = -2000;   // максимальный ток разряда
-    static constexpr short up_default_i  =  6000;   // максимальный ток заряда
+    static constexpr short lt_default_i  = -3050;   // максимальный ток разряда
+    static constexpr short up_default_i  =  6050;   // максимальный ток заряда
       // Пороги отключения: мВ, мА  (имитация аппаратной поддержки)
     short ltV = lt_default_v;
     short upV = up_default_v;

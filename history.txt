@@ -383,3 +383,17 @@ param_shift = 8; было 9
 CC: kp = 0.50   ki = 0.50   kp = 0.00     - OK
 CV: kp = 0.50   ki = 0.50   kp = 0.00     - OK
 CD: kp = 0.55   ki = 0.50   kp = 0.05     - OK
+
+08.11.2023
+Переведены в project_config в константы:
+pMult as par_mult
+pMax  as par_max
+
+Аннулированы:
+getParamMult()      - OK
+setParamMult()      - OK
+calkPMult()         - OK
+calkPMax()          - OK
+getPMult()          - OK
+getPMax()           - OK
+

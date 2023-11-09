@@ -307,7 +307,6 @@ short MCommands::dataProcessing()
     case MCmd::cmd_read_offset_u:
       if((Wake->get08(0) == 0) && (Wake->getNbt() == 3))
       {
-        //Tools->shiftV = (float)Wake->get16(1) / 1000;
         Tools->shiftV = Wake->get16(1);
         return 0;  //Tools->setProtErr(0);
       }
@@ -414,17 +413,17 @@ short MCommands::dataProcessing()
         unsigned short bits  = Wake->get16(3);
         unsigned short hz    = Wake->get16(5);
           // вычисления и запись
-        Tools->pMult = Tools->calkPMult(shift, bits);
-        Tools->pMax  = Tools->calkPMax(shift, bits);
+//        Tools->pMult = Tools->calkPMult(shift, bits);
+        // Tools->pMax  = Tools->calkPMax(shift, bits);
         //Tools->pHz   = Tools->calkPHz(hz);
         Tools->pidHz   = Tools->calkPHz(hz);
 //const float fparh = (float)(Tools->pMax / Tools->pMult);
   #ifdef DEBUG_TREATY
-    Serial.print("shift: 0x");  Serial.println(shift, HEX);
-    Serial.print("bits: 0x");   Serial.println(bits, HEX);
+//    Serial.print("shift: 0x");  Serial.println(shift, HEX);
+//    Serial.print("bits: 0x");   Serial.println(bits, HEX);
     Serial.print("hz: 0x");     Serial.println(hz, HEX);
-    Serial.print("pMult = 0x"); Serial.println(Tools->pMult, HEX);
-    Serial.print("pMax = 0x");  Serial.println(Tools->pMax, HEX);
+//    Serial.print("pMult = 0x"); Serial.println(Tools->pMult, HEX);
+//    Serial.print("pMax = 0x");  Serial.println(Tools->pMax, HEX);
     Serial.print("pHz = 0x");   Serial.println(Tools->pidHz, HEX);
   #endif
         return 0;                     // Подтверждение
@@ -690,45 +689,6 @@ void MCommands::doDischargeGo()
   Wake->configAsk( id, MCmd::cmd_discharge_go);
 }
 
-//  // 0x25
-// void MCommands::doPowerGoMode()
-// {
-//   int id = 0;
-//   id = Wake->replyU16( id, Tools->setpointU );
-//   id = Wake->replyU16( id, Tools->setpointI );
-//   id = Wake->replyU08( id, Tools->pidMode );
-//   Wake->configAsk( id, MCmd::cmd_power_go_mode);
-// }
-
-
-
-
-// //const uint8_t cmd_voltage_adj               = 0x25; // Регулировка напряжения
-// // Команда регулировки напряжения             0x25
-// void MCommands::doVoltageAdj()
-// {
-//   int id = 0;
-//   id = Wake->replyU16(id, Tools->setpointU);
-//   Wake->configAsk( id, MCmd::cmd_voltage_adj);
-// }
-
-//const uint8_t cmd_current_adj               = 0x26; // Регулировка тока заряда
-// Команда регулировки тока заряда              0x26
-// void MCommands::doCurrentAdj()
-// {
-//   int id = 0;
-//   id = Wake->replyU16(id, Tools->setpointI);
-//   Wake->configAsk( id, MCmd::cmd_current_adj);
-// }
-
-// //const uint8_t cmd_discurrent_adj            = 0x27; // Регулировка тока разряда
-// // Команда регулировки тока разряда             0x27
-// void MCommands::doDiscurrentAdj()
-// {
-//   int id = 0;
-//   id = Wake->replyU16(id, Tools->setpointD);
-//   Wake->configAsk( id, MCmd::cmd_discurrent_adj);
-// }
 
 // // 0x28 cmd_power_on:            
 // void MCommands::doPowerOn()
@@ -963,7 +923,6 @@ void MCommands::doPidSetFrequency()
 {
   int id = 0;
   id = Wake->replyU16( id, Tools->pidHz );
-  //id = Wake->replyU16( id, 0x96 );                  // test
   Wake->configAsk( id, MCmd::cmd_pid_write_frequency);
 }
 

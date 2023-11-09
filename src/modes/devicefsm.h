@@ -1,11 +1,10 @@
-/* 202314013 MKlon2v7a */
+/* 20231108 MKlon2v7a */
 
 #ifndef _DEVICEFSM_H_
 #define _DEVICEFSM_H_
 
 #include "state/mstate.h"
 #include "project_config.h"
-//#include "mtools.h"
 
 
 namespace MDevice
@@ -43,6 +42,30 @@ namespace MDevice
       MAdjPidV(MTools * Tools);
       MState * fsm() override;
   };
+
+  class MAdjPidD : public MState
+  {       
+    public:
+      MAdjPidD(MTools * Tools);
+      MState * fsm() override;
+    private:
+      static constexpr short sp_d_default = 1000u;  // 1A
+  };
+
+  class MPidFrequency : public MState
+  {
+    public:
+      MPidFrequency(MTools * Tools);
+      MState * fsm() override;
+    private:
+//      short freq[6]{ 10, 20, 50, 100, 200, 250 };
+      short i;
+//      static constexpr unsigned short fixed = MPrj::pid_frequency_default;
+      static constexpr unsigned short up = 5;
+      static constexpr unsigned short dn = 0;     
+  };
+
+
 
 
 
@@ -165,7 +188,7 @@ namespace MDevice
       MLoadKpV(MTools * Tools);
       MState * fsm() override;
     private:
-      static constexpr float up = 0.99f;    //1.00f;
+      static constexpr float up = MPrj::par_float_max;    //1.00f;
       static constexpr float dn = 0.01f; 
   };
 
@@ -176,7 +199,7 @@ namespace MDevice
       MLoadKiV(MTools * Tools);
       MState * fsm() override;
     private:
-      static constexpr float up = 0.99f;    //4.00f;
+      static constexpr float up = MPrj::par_float_max;    //4.00f;
       static constexpr float dn = 0.00f;
   };
 
@@ -187,7 +210,7 @@ namespace MDevice
       MLoadKdV(MTools * Tools);
       MState * fsm() override;
     private:
-      static constexpr float up = 0.99f;    //1.00f;
+      static constexpr float up = MPrj::par_float_max;    //1.00f;
       static constexpr float dn = 0.00f;
   };
 
@@ -216,7 +239,7 @@ namespace MDevice
       MLoadKpI(MTools * Tools);
       MState * fsm() override;
     private:
-      static constexpr float up = 0.99f;    //2.00f;
+      static constexpr float up = MPrj::par_float_max;    //2.00f;
       static constexpr float dn = 0.01f; 
   };
 
@@ -227,7 +250,7 @@ namespace MDevice
       MLoadKiI(MTools * Tools);
       MState * fsm() override;
     private:
-      static constexpr float up = 0.99f;    //4.00f;
+      static constexpr float up = MPrj::par_float_max;    //4.00f;
       static constexpr float dn = 0.00f;
   };
 
@@ -238,18 +261,10 @@ namespace MDevice
       MLoadKdI(MTools * Tools);
       MState * fsm() override;
     private:
-      static constexpr float up = 0.99f;    //1.00f;
+      static constexpr float up = MPrj::par_float_max;    //1.00f;
       static constexpr float dn = 0.00f;
   };
 
-  class MAdjPidD : public MState
-  {       
-    public:
-      MAdjPidD(MTools * Tools);
-      MState * fsm() override;
-    private:
-      static constexpr short sp_d_default = 1000u;  // 1A
-  };
 
 //========== MLoadSp, ввод порога PID-регулятора разряда ================= 
   class MLoadSp : public MState
@@ -271,7 +286,7 @@ namespace MDevice
       MLoadKpD(MTools * Tools);
       MState * fsm() override;
     private:
-      static constexpr float up     = 0.99f;  //    1.00f;
+      static constexpr float up     = MPrj::par_float_max;  //    1.00f;
       static constexpr float dn     = 0.01f; 
       static constexpr float delta  = 0.01f;
   };
@@ -283,7 +298,7 @@ namespace MDevice
       MLoadKiD(MTools * Tools);
       MState * fsm() override;
     private:
-      static constexpr float up = 0.99f;
+      static constexpr float up = MPrj::par_float_max;
       static constexpr float dn = 0.00f;
   };
 
@@ -294,22 +309,10 @@ namespace MDevice
       MLoadKdD(MTools * Tools);
       MState * fsm() override;
     private:
-      static constexpr float up = 0.99f;
+      static constexpr float up = MPrj::par_float_max;
       static constexpr float dn = 0.00f;
   };
 
-  class MPidFrequency : public MState
-  {
-    public:
-      MPidFrequency(MTools * Tools);
-      MState * fsm() override;
-    private:
-      short freq[6]{ 10, 20, 50, 100, 200, 250 };
-      short i;
-      static constexpr unsigned short fixed = MPrj::pid_frequency_default;
-      static constexpr unsigned short up = 5;
-      static constexpr unsigned short dn = 0;     
-  };
 
   class MStop : public MState
   {

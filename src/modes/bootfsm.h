@@ -26,9 +26,9 @@ namespace MBoot
       MTxSetFrequency(MTools * Tools);
       MState * fsm() override;
     private:
-      unsigned short freq[6]{ 10u, 20u, 50u, 100u, 200u, 250u };
+//      unsigned short freq[6]{ 10u, 20u, 50u, 100u, 200u, 250u };
       short i;
-      static constexpr unsigned short fixed = MPrj::pid_frequency_default;   //3;
+//      static constexpr unsigned short fixed = MPrj::pid_frequency_default;   //3;
   };
   
   class MTxGetTreaty : public MState

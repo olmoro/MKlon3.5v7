@@ -9,7 +9,7 @@
   о ходе синхронизации. По окончании процесса синхронизации прибор готов к работе в выбранном
   режиме.
 
-  05.09.2023  
+  08.11.2023  
 */
 
 #include "modes/bootfsm.h"
@@ -70,11 +70,12 @@ namespace MBoot
 
   MTxSetFrequency::MTxSetFrequency(MTools * Tools) : MState(Tools)
   {
-    i = Tools->readNvsShort("device", "freq", fixed);   // Взять сохраненное из nvs.
+    i = Tools->readNvsShort("device", "freq", MPrj::pid_frequency_default);   // Взять сохраненное из nvs.
 #ifdef BOOT_STEP
     Display->drawLabel( "Pid Frequency", 2 );
 #endif
   }
+
   MState * MTxSetFrequency::fsm()
   {
     if(i <= 0) i = 0;      if(i >= 5) i = 5;
@@ -82,12 +83,12 @@ namespace MBoot
 #ifdef BOOT_STEP
     if ( Display->getKey( MDisplay::NEXT ) )
     {
-      Tools->txSetPidFrequency(freq[i]);                  // 0x4A  Команда драйверу
+      Tools->txSetPidFrequency(MPrj::f_hz[i]);                  // 0x4A  Команда драйверу
       return new MTxGetTreaty(Tools);
     }
     else return this;
 #else
-    Tools->txSetPidFrequency(freq[i]);                  // 0x4A  Команда драйверу
+    Tools->txSetPidFrequency(MPrj::f_hz[i]);                  // 0x4A  Команда драйверу
     return new MTxGetTreaty(Tools);
 #endif
   };
@@ -296,6 +297,4 @@ namespace MBoot
     return nullptr;                // Возврат к выбору режима
 #endif
   }
-};  //MBoot
-
-// !Конечный автомат синхронизации данных между контроллерами.
+};  //MBoot Конечный автомат синхронизации данных между контроллерами.
