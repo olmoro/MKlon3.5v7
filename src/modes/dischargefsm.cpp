@@ -335,7 +335,7 @@ namespace MDis
     /* Состояние разряда */
   MGo::MGo(MTools * Tools) : MState(Tools)
   {
-        targetI = 100;                                            // Начальное задание тока
+      //  targetI = 100;                                            // Начальное задание тока
 
 //  Display->drawLabel(        "Mode DISCHARGE", 0);
     Display->drawLabel("The process is running", 1);
@@ -351,13 +351,13 @@ namespace MDis
     Tools->chargeCalculations();                  /* Подсчет отданных ампер-часов. Период 100мс. */
     if(Tools->getMilliVolt() <= minV)   return new MStop(Tools);       /* Следить за напряжением */
 
-    // Плавое увеличение тока разряда, примерно 0.5А в секунду
-    if(targetI != spI)
-    {
-      targetI += 50;
-      if(targetI >= spI) targetI = spI;
-      Tools->txSetDiscurrent(targetI);
-    }
+    // // Плавое увеличение тока разряда, примерно 0.5А в секунду
+    // if(targetI != spI)
+    // {
+    //   targetI += 50;
+    //   if(targetI >= spI) targetI = spI;
+    //   Tools->txSetDiscurrent(targetI);
+    // }
 
     switch (Display->getKey())
     {

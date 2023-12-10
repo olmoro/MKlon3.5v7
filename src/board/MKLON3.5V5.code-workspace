@@ -4,10 +4,20 @@
       "path": "../.."
     },
     {
-      "path": "../../../MCDMv7"
+      "name": "MKlon3.5e",
+      "path": "../../../MKlon3.5e"
     },
     {
-      "path": "../../../MKlon2.5a"
+      "name": "MoroPid",
+      "path": "../../../MoroPid"
+    },
+    {
+      "name": "Charger_328p_ST7735_v0_17",
+      "path": "../../../Charger_328p_ST7735_v0_17"
+    },
+    {
+      "name": "MoroPidE",
+      "path": "../../../MoroPidE"
     }
   ]
 }

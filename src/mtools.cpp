@@ -363,17 +363,36 @@ void MTools::txDischargeGo(short spI)
   // Команды управления измерителями:
     // Множитель преобразования в милливольты
 void MTools::txGetFactorU()                           {buffCmd = MCmd::cmd_read_factor_u;}            // 0x30 Чтение
-void MTools::txSetFactorU(short val) {factorV = val;   buffCmd = MCmd::cmd_write_factor_u;}           // 0x31 Запись
-void MTools::txSetFactorDefaultU()                    {buffCmd = MCmd::cmd_write_factor_default_u;}   // 0x32 Возврат к заводскому
+void MTools::txSetFactorU(short val)
+  {
+    factorV = val;   buffCmd = MCmd::cmd_write_factor_u;            // 0x31* Запись
+    vTaskDelay(80 / portTICK_PERIOD_MS);
+  }
+void MTools::txSetFactorDefaultU()
+{buffCmd = MCmd::cmd_write_factor_default_u;}                       // 0x32 Возврат к заводскому
     // Параметр сглаживания по напряжению
-void MTools::txGetSmoothU()                           {buffCmd = MCmd::cmd_read_smooth_u;}            // 0x33 Чтение
-void MTools::txSetSmoothU(short val) {smoothV = val;   buffCmd = MCmd::cmd_write_smooth_u;}           // 0x34 Запись
+void MTools::txGetSmoothU()
+{buffCmd = MCmd::cmd_read_smooth_u;}                                // 0x33 Чтение
+void MTools::txSetSmoothU(short val)
+  {
+    smoothV = val;   buffCmd = MCmd::cmd_write_smooth_u;            // 0x34* Запись
+    vTaskDelay(80 / portTICK_PERIOD_MS);
+  }
     // Приборное смещение по напряжению
-void MTools::txGetShiftU()                            {buffCmd = MCmd::cmd_read_offset_u;}            // 0x35 Чтение
-void MTools::txSetShiftU(short val)  {shiftV  = val;   buffCmd = MCmd::cmd_write_offset_u;}           // 0x36 Запись
+void MTools::txGetShiftU()
+{buffCmd = MCmd::cmd_read_offset_u;}                                // 0x35 Чтение
+void MTools::txSetShiftU(short val)
+{
+  shiftV  = val;   buffCmd = MCmd::cmd_write_offset_u;              // 0x36* Запись
+  vTaskDelay(80 / portTICK_PERIOD_MS);
+}
     // Множитель преобразования в миллиамперы
 void MTools::txGetFactorI()                           {buffCmd = MCmd::cmd_read_factor_i;}            // 0x38 Чтение
-void MTools::txSetFactorI(short val) {factorI = val;   buffCmd = MCmd::cmd_write_factor_i;}           // 0x39 Запись
+void MTools::txSetFactorI(short val)
+{
+  factorI = val;   buffCmd = MCmd::cmd_write_factor_i;              // 0x39* Запись
+  vTaskDelay(80 / portTICK_PERIOD_MS);
+}
 void MTools::txSetFactorDefaultI()                    {buffCmd = MCmd::cmd_write_factor_default_i;}   // 0x3A Возврат к заводскому
     // Параметр сглаживания по току
 void MTools::txGetSmoothI()                           {buffCmd = MCmd::cmd_read_smooth_i;}            // 0x3B Чтение

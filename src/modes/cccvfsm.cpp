@@ -322,6 +322,7 @@ namespace MCccv
       о продолжительности и отданном заряде. */
   MStop::MStop(MTools * Tools) : MState(Tools)
   {
+  Tools->txPowerAuto(minV, 0);      // 0X20*
     Tools->txPowerStop();             // 0x21* Команда драйверу отключить преобразователь
     Display->drawLabel(                 "CCCV", 0);
     Display->drawLabel("The charge is stopped", 1);
